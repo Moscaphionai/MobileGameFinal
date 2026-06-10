@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MessageQueue
 {
@@ -9,7 +10,13 @@ namespace MessageQueue
 
     public class MessageQueueManager
     {
-        private readonly Dictionary<Type, List<Delegate>> _listeners;
+        private struct ListenerEntry
+        {
+            public Delegate Listener;
+            public int Priority;
+        }
+
+        private readonly Dictionary<Type, List<ListenerEntry>> _listeners;
 
         private static MessageQueueManager _instance;
 
@@ -17,18 +24,28 @@ namespace MessageQueue
 
         private MessageQueueManager()
         {
-            _listeners = new Dictionary<Type, List<Delegate>>();
+            _listeners = new Dictionary<Type, List<ListenerEntry>>();
         }
 
         public void AddListener<T>(Action<T> listener)
         {
+            AddListener(listener, 0);
+        }
+
+        public void AddListener<T>(Action<T> listener, int priority)
+        {
+            var entry = new ListenerEntry { Listener = listener, Priority = priority };
             if (_listeners.TryGetValue(typeof(T), out var listeners))
             {
-                listeners.Add(listener);
+                int index = listeners.FindIndex(e => e.Priority > priority);
+                if (index >= 0)
+                    listeners.Insert(index, entry);
+                else
+                    listeners.Add(entry);
             }
             else
             {
-                listeners = new List<Delegate> { listener };
+                listeners = new List<ListenerEntry> { entry };
                 _listeners.Add(typeof(T), listeners);
             }
         }
@@ -37,7 +54,9 @@ namespace MessageQueue
         {
             if (_listeners.TryGetValue(typeof(T), out var listeners))
             {
-                listeners.Remove(listener);
+                int index = listeners.FindIndex(e => e.Listener == listener);
+                if (index >= 0)
+                    listeners.RemoveAt(index);
             }
         }
 
@@ -45,10 +64,7 @@ namespace MessageQueue
         {
             if (_listeners.TryGetValue(message.GetType(), out var listeners))
             {
-                for (int i = 0; i < listeners.Count; i++)
-                {
-                    listeners[i].DynamicInvoke(message);
-                }
+                listeners.ForEach(e => e.Listener.DynamicInvoke(message));
             }
         }
     }
