@@ -1,11 +1,21 @@
-﻿using Utilities;
+﻿using MessageQueue;
+using MessageQueue.Messages.Gameplay.Battle;
+using Utilities;
 
 namespace Compose.Gameplay.Battle
 {
-
-
+    public enum BattleState
+    {
+        BattleStart,
+        BattleWin,
+        BattleLose,
+    }
     public class BattleManager : MonoSingleton<BattleManager>
     {
-        // TODO: Item 4 — 发布 BattleStartMessage，订阅 BattleEndMessage 更新胜负
+        public void BattleStart()
+        {
+            
+            MessageQueueManager.Instance.SendMessage(new BattleStartMessage());
+        }
     }
 }

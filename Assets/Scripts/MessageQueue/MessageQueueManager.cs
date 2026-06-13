@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 
 namespace MessageQueue
 {
@@ -14,6 +15,7 @@ namespace MessageQueue
         {
             public Delegate Listener;
             public int Priority;
+            public bool IsAsync;
         }
 
         private readonly Dictionary<Type, List<ListenerEntry>> _listeners;
@@ -27,17 +29,13 @@ namespace MessageQueue
             _listeners = new Dictionary<Type, List<ListenerEntry>>();
         }
 
-        public void AddListener<T>(Action<T> listener)
-        {
-            AddListener(listener, 0);
-        }
+        // ---- 私有辅助 ----
 
-        public void AddListener<T>(Action<T> listener, int priority)
+        private void InsertListener(Type messageType, ListenerEntry entry)
         {
-            var entry = new ListenerEntry { Listener = listener, Priority = priority };
-            if (_listeners.TryGetValue(typeof(T), out var listeners))
+            if (_listeners.TryGetValue(messageType, out var listeners))
             {
-                int index = listeners.FindIndex(e => e.Priority > priority);
+                int index = listeners.FindIndex(e => e.Priority > entry.Priority);
                 if (index >= 0)
                     listeners.Insert(index, entry);
                 else
@@ -46,8 +44,21 @@ namespace MessageQueue
             else
             {
                 listeners = new List<ListenerEntry> { entry };
-                _listeners.Add(typeof(T), listeners);
+                _listeners.Add(messageType, listeners);
             }
+        }
+
+        // ---- 同步监听器注册/注销（向后兼容） ----
+
+        public void AddListener<T>(Action<T> listener)
+        {
+            AddListener(listener, 100);
+        }
+
+        public void AddListener<T>(Action<T> listener, int priority)
+        {
+            var entry = new ListenerEntry { Listener = listener, Priority = priority, IsAsync = false };
+            InsertListener(typeof(T), entry);
         }
 
         public void RemoveListener<T>(Action<T> listener)
@@ -60,11 +71,64 @@ namespace MessageQueue
             }
         }
 
+        // ---- 异步监听器注册/注销（新增） ----
+
+        public void AddAsyncListener<T>(Func<T, UniTask> listener)
+        {
+            AddAsyncListener(listener, 0);
+        }
+
+        public void AddAsyncListener<T>(Func<T, UniTask> listener, int priority)
+        {
+            var entry = new ListenerEntry { Listener = listener, Priority = priority, IsAsync = true };
+            InsertListener(typeof(T), entry);
+        }
+
+        public void RemoveListener<T>(Func<T, UniTask> listener)
+        {
+            if (_listeners.TryGetValue(typeof(T), out var listeners))
+            {
+                int index = listeners.FindIndex(e => e.Listener == listener);
+                if (index >= 0)
+                    listeners.RemoveAt(index);
+            }
+        }
+
+        // ---- 发送消息 ----
+
         public void SendMessage(IMessage message)
         {
             if (_listeners.TryGetValue(message.GetType(), out var listeners))
             {
-                listeners.ForEach(e => e.Listener.DynamicInvoke(message));
+                foreach (var entry in listeners)
+                {
+                    if (entry.IsAsync)
+                    {
+                        ((Func<IMessage, UniTask>)entry.Listener).Invoke(message).Forget();
+                    }
+                    else
+                    {
+                        entry.Listener.DynamicInvoke(message);
+                    }
+                }
+            }
+        }
+
+        public async UniTask SendMessageAsync(IMessage message)
+        {
+            if (_listeners.TryGetValue(message.GetType(), out var listeners))
+            {
+                foreach (var entry in listeners)
+                {
+                    if (entry.IsAsync)
+                    {
+                        await ((Func<IMessage, UniTask>)entry.Listener).Invoke(message);
+                    }
+                    else
+                    {
+                        entry.Listener.DynamicInvoke(message);
+                    }
+                }
             }
         }
     }
