@@ -1,27 +1,15 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace Compose.Gameplay.Battle.Turn
 {
-    public class EnemyTurnAct : TurnStateBase
+    public sealed class EnemyTurnAct : TurnStateBase
     {
-        public EnemyTurnAct()
-        {
-            state = TurnState.EnemyTurnAct;
-        }
-        
-        public override async UniTask OnStateEnter()
-        {
-            await base.OnStateEnter();
-        }
+        public override TurnState State => TurnState.EnemyTurnAct;
 
-        public override UniTask Logic()
+        public override UniTask ExecuteAsync()
         {
-            
-        }
-
-        public override UniTask OnStateExit()
-        {
-            
+            // Execute enemies from left to right and await each action here.
+            return UniTask.CompletedTask;
         }
     }
 }

@@ -1,31 +1,15 @@
-﻿using Cysharp.Threading.Tasks;
-using MessageQueue;
-using MessageQueue.Messages.Gameplay.Battle;
+using Cysharp.Threading.Tasks;
 
 namespace Compose.Gameplay.Battle.Turn
 {
-    public class EnemyTurnStart : TurnStateBase
+    public sealed class EnemyTurnStart : TurnStateBase
     {
-        public EnemyTurnStart()
+        public override TurnState State => TurnState.EnemyTurnStart;
+
+        public override UniTask ExecuteAsync()
         {
-            state = TurnState.EnemyTurnStart;
-        }
-        
-        public override async UniTask OnStateEnter()
-        {
-            await base.OnStateEnter();
-            await MessageQueueManager.Instance.SendMessageAsync(new TurnStateChangeToMessage()
-            {
-                toState = TurnState.EnemyTurnAct
-            });
-        }
-        public override UniTask Logic()
-        {
-            
-        }
-        public override UniTask OnStateExit()
-        {
-            
+            // Enemy status effects are resolved here before actions begin.
+            return UniTask.CompletedTask;
         }
     }
 }

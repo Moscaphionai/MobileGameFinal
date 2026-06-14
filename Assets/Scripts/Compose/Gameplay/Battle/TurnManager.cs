@@ -1,9 +1,8 @@
-using System;
+using System.Collections.Generic;
 using Compose.Gameplay.Battle.Turn;
 using Cysharp.Threading.Tasks;
-using MessageQueue;
-using MessageQueue.Messages.Gameplay.Battle;
-using UnityEngine.Assertions;
+using EventBus;
+using EventBus.Events.Gameplay.Battle;
 using Utilities;
 
 namespace Compose.Gameplay.Battle
@@ -18,71 +17,85 @@ namespace Compose.Gameplay.Battle
         EnemyTurnEnd
     }
 
-    public class TurnManager : MonoSingleton<TurnManager>
+    public sealed class TurnManager : MonoSingleton<TurnManager>
     {
-        private TurnStateBase currentState;
-        public TurnState CurrentTurnState => currentState.State;
+        private readonly Dictionary<TurnState, TurnStateBase> _states = new();
 
-        private TurnStateBase playerTurnStart;
-        private TurnStateBase playerTurnPlay;
-        private TurnStateBase playerTurnEnd;
-        private TurnStateBase enemyTurnStart;
-        private TurnStateBase enemyTurnAct;
-        private TurnStateBase enemyTurnEnd;
+        private TurnStateBase _currentState;
+        private bool _isTransitioning;
 
-        public void Awake()
+        public TurnState? CurrentTurnState => _currentState?.State;
+        public bool IsTransitioning => _isTransitioning;
+
+        protected override void OnInitialize()
         {
-            playerTurnStart = new PlayerTurnStart();
-            playerTurnPlay = new PlayerTurnPlay();
-            playerTurnEnd = new PlayerTurnEnd();
-            enemyTurnStart = new EnemyTurnStart();
-            enemyTurnAct = new EnemyTurnAct();
-            enemyTurnEnd = new EnemyTurnEnd();
+            _states.Add(TurnState.PlayerTurnStart, new PlayerTurnStart());
+            _states.Add(TurnState.PlayerTurnPlay, new PlayerTurnPlay());
+            _states.Add(TurnState.PlayerTurnEnd, new PlayerTurnEnd());
+            _states.Add(TurnState.EnemyTurnStart, new EnemyTurnStart());
+            _states.Add(TurnState.EnemyTurnAct, new EnemyTurnAct());
+            _states.Add(TurnState.EnemyTurnEnd, new EnemyTurnEnd());
         }
 
-        private void Update()
+        public async UniTask<bool> StartBattleAsync()
         {
-            currentState.Logic();
-        }
-        
-        private async UniTask TurnStateChangeTo(TurnState toState)
-        { 
-            TurnStateBase next = toState switch
+            if (_currentState != null || _isTransitioning)
+                return false;
+
+            _isTransitioning = true;
+            try
             {
-                TurnState.PlayerTurnStart => playerTurnStart,
-                TurnState.PlayerTurnPlay => playerTurnPlay,
-                TurnState.PlayerTurnEnd => playerTurnEnd,
-                TurnState.EnemyTurnStart => enemyTurnStart,
-                TurnState.EnemyTurnAct => enemyTurnAct,
-                TurnState.EnemyTurnEnd => enemyTurnEnd,
-            };
-            await currentState?.OnStateExit();
-            currentState = next;
-            await currentState.OnStateEnter();
-            await currentState.Logic();
+                await StartPlayerTurnAsync();
+                return true;
+            }
+            finally
+            {
+                _isTransitioning = false;
+            }
         }
 
-        private void OnEnable()
+        public async UniTask<bool> EndPlayerTurnAsync()
         {
-            MessageQueueManager.Instance.AddListener<BattleStartMessage>(OnBattleStart, 4000);
-            MessageQueueManager.Instance.AddListener<TurnStateChangeToMessage>(OnTurnStateChangeTo, 0);
+            if (CurrentTurnState != TurnState.PlayerTurnPlay || _isTransitioning)
+                return false;
+
+            _isTransitioning = true;
+            try
+            {
+                await ChangeStateAsync(TurnState.PlayerTurnEnd);
+                await ChangeStateAsync(TurnState.EnemyTurnStart);
+                await ChangeStateAsync(TurnState.EnemyTurnAct);
+                await ChangeStateAsync(TurnState.EnemyTurnEnd);
+                await StartPlayerTurnAsync();
+                return true;
+            }
+            finally
+            {
+                _isTransitioning = false;
+            }
         }
 
-        private void OnDisable()
+        private async UniTask StartPlayerTurnAsync()
         {
-            MessageQueueManager.Instance.RemoveListener<BattleStartMessage>(OnBattleStart);
-            MessageQueueManager.Instance.RemoveListener<TurnStateChangeToMessage>(OnTurnStateChangeTo);
+            await ChangeStateAsync(TurnState.PlayerTurnStart);
+            await ChangeStateAsync(TurnState.PlayerTurnPlay);
         }
 
-
-        private void OnTurnStateChangeTo(TurnStateChangeToMessage msg)
+        private async UniTask ChangeStateAsync(TurnState nextState)
         {
-            TurnStateChangeTo(msg.toState);
-        }
+            var previousState = CurrentTurnState;
 
-        private void OnBattleStart(BattleStartMessage msg)
-        {
-            TurnStateChangeTo(TurnState.PlayerTurnStart);
+            if (_currentState != null)
+                await _currentState.ExitAsync();
+
+            _currentState = _states[nextState];
+            await EventBusManager.Instance.PublishAsync(new TurnStateChangedEvent
+            {
+                PreviousState = previousState,
+                CurrentState = nextState
+            });
+            await _currentState.EnterAsync();
+            await _currentState.ExecuteAsync();
         }
     }
 }

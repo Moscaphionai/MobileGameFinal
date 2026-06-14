@@ -1,25 +1,15 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace Compose.Gameplay.Battle.Turn
 {
-    public class PlayerTurnEnd : TurnStateBase
+    public sealed class PlayerTurnEnd : TurnStateBase
     {
-        public PlayerTurnEnd()
+        public override TurnState State => TurnState.PlayerTurnEnd;
+
+        public override UniTask ExecuteAsync()
         {
-            state = TurnState.PlayerTurnEnd;
-        }
-        
-        public override async UniTask OnStateEnter()
-        {
-            await base.OnStateEnter();
-        }
-        public override UniTask Logic()
-        {
-            
-        }
-        public override UniTask OnStateExit()
-        {
-            
+            // Discard the remaining hand and resolve end-of-turn effects here.
+            return UniTask.CompletedTask;
         }
     }
 }

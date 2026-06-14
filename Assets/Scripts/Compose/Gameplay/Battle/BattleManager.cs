@@ -1,5 +1,4 @@
-﻿using MessageQueue;
-using MessageQueue.Messages.Gameplay.Battle;
+using Cysharp.Threading.Tasks;
 using Utilities;
 
 namespace Compose.Gameplay.Battle
@@ -10,12 +9,12 @@ namespace Compose.Gameplay.Battle
         BattleWin,
         BattleLose,
     }
+
     public class BattleManager : MonoSingleton<BattleManager>
     {
         public void BattleStart()
         {
-            
-            MessageQueueManager.Instance.SendMessage(new BattleStartMessage());
+            TurnManager.Instance.StartBattleAsync().Forget();
         }
     }
 }

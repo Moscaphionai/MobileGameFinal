@@ -1,25 +1,15 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace Compose.Gameplay.Battle.Turn
 {
-    public class PlayerTurnPlay : TurnStateBase
+    public sealed class PlayerTurnPlay : TurnStateBase
     {
-        public PlayerTurnPlay()
+        public override TurnState State => TurnState.PlayerTurnPlay;
+
+        public override UniTask ExecuteAsync()
         {
-            state = TurnState.PlayerTurnPlay;
-        }
-        
-        public override async UniTask OnStateEnter()
-        {
-            await base.OnStateEnter();
-        }
-        public override UniTask Logic()
-        {
-            
-        }
-        public override UniTask OnStateExit()
-        {
-            
+            // The sequence pauses here until EndPlayerTurnAsync is called.
+            return UniTask.CompletedTask;
         }
     }
 }

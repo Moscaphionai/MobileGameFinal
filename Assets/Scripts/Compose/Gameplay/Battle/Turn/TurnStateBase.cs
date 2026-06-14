@@ -1,30 +1,21 @@
-﻿using Cysharp.Threading.Tasks;
-using MessageQueue;
-using MessageQueue.Messages.Gameplay.Battle;
+using Cysharp.Threading.Tasks;
 
 namespace Compose.Gameplay.Battle.Turn
 {
     public abstract class TurnStateBase
     {
-        protected TurnState state;
-        public TurnState State => state;
+        public abstract TurnState State { get; }
 
-        public virtual async UniTask OnStateEnter()
+        public virtual UniTask EnterAsync()
         {
-           await MessageQueueManager.Instance.SendMessageAsync(new TurnStateChangedMessage()
-            {
-                nowState = state,
-            });
+            return UniTask.CompletedTask;
         }
 
-        public virtual async UniTask Logic()
-        {
-            await UniTask.DelayFrame(1);
-        }
+        public abstract UniTask ExecuteAsync();
 
-        public virtual async UniTask OnStateExit()
+        public virtual UniTask ExitAsync()
         {
-            await UniTask.DelayFrame(1);
+            return UniTask.CompletedTask;
         }
     }
 }

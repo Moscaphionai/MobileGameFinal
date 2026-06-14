@@ -1,6 +1,7 @@
-﻿using Compose.Gameplay.Battle;
-using MessageQueue;
-using MessageQueue.Messages.Gameplay.Battle;
+using Compose.Gameplay.Battle;
+using Cysharp.Threading.Tasks;
+using EventBus;
+using EventBus.Events.Gameplay.Battle;
 using UnityEngine;
 using Utilities;
 
@@ -10,29 +11,29 @@ namespace UnitTest
     {
         private void OnEnable()
         {
-            MessageQueueManager.Instance.AddListener<TurnStateChangeToMessage>(OnTurnStateChangeTo, 0);
+            EventBusManager.Instance.AddListener<TurnStateChangedEvent>(OnTurnStateChanged, 0);
         }
 
         private void OnDisable()
         {
-            MessageQueueManager.Instance.RemoveListener<TurnStateChangeToMessage>(OnTurnStateChangeTo);
+            EventBusManager.Instance.RemoveListener<TurnStateChangedEvent>(OnTurnStateChanged);
         }
 
-        private void OnTurnStateChangeTo(TurnStateChangeToMessage msg)
+        private void OnTurnStateChanged(TurnStateChangedEvent eventData)
         {
-            Debug.Log($"[MonoTest] TurnState → {msg.toState}");
+            Debug.Log($"[MonoTest] TurnState: {eventData.PreviousState} -> {eventData.CurrentState}");
         }
 
-        private void DebugSendTurnState(TurnState state)
+        private static void LogManagedTransition(TurnState state)
         {
-            MessageQueueManager.Instance.SendMessage(new TurnStateChangeToMessage { toState = state });
+            Debug.LogWarning($"[MonoTest] {state} is controlled by the turn sequence.");
         }
 
-        public void DebugToPlayerTurnStart() => DebugSendTurnState(TurnState.PlayerTurnStart);
-        public void DebugToPlayerTurnPlay() => DebugSendTurnState(TurnState.PlayerTurnPlay);
-        public void DebugToPlayerTurnEnd() => DebugSendTurnState(TurnState.PlayerTurnEnd);
-        public void DebugToEnemyTurnStart() => DebugSendTurnState(TurnState.EnemyTurnStart);
-        public void DebugToEnemyTurnAct() => DebugSendTurnState(TurnState.EnemyTurnAct);
-        public void DebugToEnemyTurnEnd() => DebugSendTurnState(TurnState.EnemyTurnEnd);
+        public void DebugToPlayerTurnStart() => TurnManager.Instance.StartBattleAsync().Forget();
+        public void DebugToPlayerTurnPlay() => LogManagedTransition(TurnState.PlayerTurnPlay);
+        public void DebugToPlayerTurnEnd() => TurnManager.Instance.EndPlayerTurnAsync().Forget();
+        public void DebugToEnemyTurnStart() => LogManagedTransition(TurnState.EnemyTurnStart);
+        public void DebugToEnemyTurnAct() => LogManagedTransition(TurnState.EnemyTurnAct);
+        public void DebugToEnemyTurnEnd() => LogManagedTransition(TurnState.EnemyTurnEnd);
     }
 }

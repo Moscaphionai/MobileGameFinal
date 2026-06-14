@@ -1,30 +1,15 @@
-﻿using Cysharp.Threading.Tasks;
-using MessageQueue;
-using MessageQueue.Messages.Gameplay.Battle;
+using Cysharp.Threading.Tasks;
 
 namespace Compose.Gameplay.Battle.Turn
 {
-    public class PlayerTurnStart : TurnStateBase
+    public sealed class PlayerTurnStart : TurnStateBase
     {
-        public PlayerTurnStart()
+        public override TurnState State => TurnState.PlayerTurnStart;
+
+        public override UniTask ExecuteAsync()
         {
-            state = TurnState.PlayerTurnStart;
-        }
-        public override async UniTask OnStateEnter()
-        {
-            await base.OnStateEnter();
-            await MessageQueueManager.Instance.SendMessageAsync(new TurnStateChangeToMessage
-            {
-                toState = TurnState.PlayerTurnPlay
-            });
-        }
-        public override UniTask Logic()
-        {
-            
-        }
-        public override UniTask OnStateExit()
-        {
-            
+            // Energy recovery, block reset, status effects and card draw belong here.
+            return UniTask.CompletedTask;
         }
     }
 }
