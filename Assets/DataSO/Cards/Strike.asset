@@ -14,10 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   info:
     id: 0
-    name: 
-    nameEn: 
+    name: "\u6253\u51FB"
+    nameEn: Strike
     description: 
     descriptionEn: 
     rarity: 0
-    cost: 0
+    cost: 1
     type: 0
+  effects:
+  - type: 0
+    figure: 100
+    domain: 0
+    target: 1

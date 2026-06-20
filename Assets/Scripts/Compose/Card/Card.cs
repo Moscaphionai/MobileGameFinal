@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Compose.Effects;
 using ScriptableObjects;
 using UnityEngine;
 
@@ -7,7 +8,7 @@ namespace Compose.Card
 {
     public sealed class CardData
     {
-        private readonly List<EffectData> effects = new List<EffectData>();
+        private readonly List<EffectData> effects = new();
 
         public int Id { get; }
         public string Name { get; }

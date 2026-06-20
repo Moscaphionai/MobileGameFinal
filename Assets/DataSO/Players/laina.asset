@@ -10,11 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: laina
+  m_Name: Laina
   m_EditorClassIdentifier: Assembly-CSharp:ScriptableObjects:PlayerSO
   info:
-    name: 
-    atk: 0
-    def: 0
-    hp: 0
-  deck: []
+    name: Laina
+    atk: 40
+    def: 30
+    hp: 340
+  deck:
+  - {fileID: 11400000, guid: 74846faa54170da469d6bd99cdbdd9bb, type: 2}
+  - {fileID: 11400000, guid: 74846faa54170da469d6bd99cdbdd9bb, type: 2}
+  - {fileID: 11400000, guid: 74846faa54170da469d6bd99cdbdd9bb, type: 2}
+  - {fileID: 11400000, guid: 74846faa54170da469d6bd99cdbdd9bb, type: 2}
+  - {fileID: 11400000, guid: 74846faa54170da469d6bd99cdbdd9bb, type: 2}
+  - {fileID: 11400000, guid: 74846faa54170da469d6bd99cdbdd9bb, type: 2}
+  - {fileID: 11400000, guid: 74846faa54170da469d6bd99cdbdd9bb, type: 2}
+  - {fileID: 11400000, guid: 74846faa54170da469d6bd99cdbdd9bb, type: 2}
+  - {fileID: 11400000, guid: 74846faa54170da469d6bd99cdbdd9bb, type: 2}
+  - {fileID: 11400000, guid: 74846faa54170da469d6bd99cdbdd9bb, type: 2}
