@@ -1,7 +1,10 @@
-﻿using UnityEngine;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace ScriptableObjects
 {
+    [Serializable]
     public abstract class ActorInfo
     {
         public string name;
@@ -10,33 +13,30 @@ namespace ScriptableObjects
         public int hp;
     }
 
-    public class PlayerInfo : ActorInfo
+    [Serializable]
+    public sealed class PlayerInfo : ActorInfo
     {
     }
 
-    public class EnemyInfo : ActorInfo
+    [Serializable]
+    public sealed class EnemyInfo : ActorInfo
     {
     }
 
     public abstract class ActorSO : ScriptableObject
     {
-        public ActorInfo info { get; private set; }
     }
 
-
-    [CreateAssetMenu(fileName = "PlayerName", menuName = "ScriptableObjects/PlayerSO")]
-    public class PlayerSO : ActorSO
+    [CreateAssetMenu(fileName = "NewPlayer", menuName = "ScriptableObjects/Actors/Player")]
+    public sealed class PlayerSO : ActorSO
     {
-
-        private PlayerSO()
-        {
-        }
+        public PlayerInfo info = new PlayerInfo();
+        public List<CardSO> deck = new List<CardSO>();
     }
 
-    public class EnemySO : ActorSO
+    [CreateAssetMenu(fileName = "NewEnemy", menuName = "ScriptableObjects/Actors/Enemy")]
+    public sealed class EnemySO : ActorSO
     {
-        private EnemySO()
-        {
-        }
+        public EnemyInfo info = new EnemyInfo();
     }
 }
