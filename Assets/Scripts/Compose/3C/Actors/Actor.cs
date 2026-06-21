@@ -1,5 +1,5 @@
 using System;
-using ScriptableObjects;
+using ScriptableObjects.Actors;
 using UnityEngine;
 
 namespace Compose._3C.Actors

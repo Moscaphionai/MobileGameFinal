@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Utilities;
 
 namespace Compose
 {
@@ -11,7 +12,7 @@ namespace Compose
     {
         
     }
-    public class ComposeManager
+    public class ComposeManager : MonoSingleton<ComposeManager>
     {
         
     }

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Compose.Card;
-using ScriptableObjects;
+using ScriptableObjects.Actors;
 
 namespace Compose._3C.Actors
 {

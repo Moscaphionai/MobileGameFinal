@@ -1,4 +1,4 @@
-using ScriptableObjects;
+using ScriptableObjects.Actors;
 
 namespace Compose._3C.Actors
 {
