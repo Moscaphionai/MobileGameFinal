@@ -393,10 +393,6 @@
 │  └─ Relics/
 └─ Utilities/</code></pre>
 
-            <div class="callout warning">
-                当前目录 <code>3C/Actors</code> 迫使命名空间写成 <code>Compose._3C.Actors</code>，可读性较差。
-                已有脚本可暂时保留以避免 Unity 引用变动，但新代码不要继续扩展 <code>_3C</code>；整理阶段再通过 Unity Editor 移动到 <code>Compose/Actors</code>。
-            </div>
             <div class="callout">
                 当前 <code>Affair</code> 目录不建议继续使用。叙事事件属于房间节点，推荐放入 <code>Compose.Rooms</code>，类型命名为
                 <code>EventRoom</code>、<code>RestRoom</code>，避免与 <code>Messages.Events</code> 混淆。

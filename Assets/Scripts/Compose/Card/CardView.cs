@@ -5,7 +5,7 @@ using Utilities;
 
 namespace Compose.Card
 {
-    public sealed class CardPanel : MonoDul
+    public sealed class CardView : MonoDul
     {
         [SerializeField] private Image rarity;
         [SerializeField] private TMP_Text cardName;
@@ -15,11 +15,11 @@ namespace Compose.Card
 
         public void Render(CardData data)
         {
-            rarity.color = Constants.Rarity[(int)data.Rarity];
-            cardName.text = data.Name;
-            description.text = data.Description;
-            cost.text = data.Cost.ToString();
-            cardKind.text = data.Type.ToString();
+            rarity.color = Constants.Rarity[(int)data.rarity];
+            cardName.text = data.name;
+            description.text = data.description;
+            cost.text = data.cost.ToString();
+            cardKind.text = data.type.ToString();
         }
     }
 }

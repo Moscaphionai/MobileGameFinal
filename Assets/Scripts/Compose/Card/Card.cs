@@ -6,31 +6,28 @@ using UnityEngine;
 
 namespace Compose.Card
 {
+    [Serializable]
     public sealed class CardData
     {
-        private readonly List<EffectData> effects = new();
-
-        public int Id { get; }
-        public string Name { get; }
-        public string NameEn { get; }
-        public string Description { get; }
-        public string DescriptionEn { get; }
-        public CardRarity Rarity { get; }
-        public CardType Type { get; }
-        public int Cost { get; private set; }
-        public IReadOnlyList<EffectData> Effects => effects;
+        public int id;
+        public string name;
+        public string nameEn;
+        public string description;
+        public CardRarity rarity;
+        public CardType type;
+        public int cost;
+        public List<EffectData> effects = new();
 
         public CardData(CardSO cardSO)
         {
             var info = cardSO.info;
-            Id = info.id;
-            Name = info.name;
-            NameEn = info.nameEn;
-            Description = info.description;
-            DescriptionEn = info.descriptionEn;
-            Rarity = info.rarity;
-            Type = info.type;
-            Cost = info.cost;
+            id = info.id;
+            name = info.name;
+            nameEn = info.nameEn;
+            description = info.description;
+            rarity = info.rarity;
+            type = info.type;
+            cost = info.cost;
 
             foreach (var effect in cardSO.effects)
             {
@@ -40,31 +37,31 @@ namespace Compose.Card
 
         public void SetCost(int value)
         {
-            Cost = Math.Max(0, value);
+            cost = Math.Max(0, value);
         }
     }
 
     public sealed class Card : MonoDul
     {
-        [SerializeField] private CardPanel panel;
+        [SerializeField] private CardView view;
 
-        public CardData Data { get; private set; }
+        public CardData data;
 
         public void Init(CardSO cardSO)
         {
-            Data = new CardData(cardSO);
-            panel.Render(Data);
+            data = new CardData(cardSO);
+            view.Render(data);
         }
 
         public void SetCost(int value)
         {
-            Data.SetCost(value);
-            panel.Render(Data);
+            data.SetCost(value);
+            view.Render(data);
         }
 
         public void Refresh()
         {
-            panel.Render(Data);
+            view.Render(data);
         }
     }
 }

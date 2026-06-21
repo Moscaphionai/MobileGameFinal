@@ -1,6 +1,6 @@
 ﻿namespace Compose.Actors
 {
-    public class PlayerPanel : ActorPanel
+    public class PlayerView : ActorView
     {
         
     }

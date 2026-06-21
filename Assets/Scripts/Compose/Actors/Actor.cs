@@ -45,7 +45,7 @@ namespace Compose.Actors
 
     public abstract class Actor : MonoDul
     {
-        [SerializeField] private ActorPanel panel;
+        [SerializeField] private ActorView panel;
 
         public ActorData Data { get; protected set; }
 

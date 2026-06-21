@@ -6,10 +6,7 @@ namespace Compose.Actors
 {
     public sealed class PlayerData : ActorData
     {
-        private readonly List<CardData> deck = new List<CardData>();
-
-        public IReadOnlyList<CardData> Deck => deck;
-
+        public List<CardData> deck = new();
         public PlayerData(PlayerSO playerSO) : base(playerSO.info)
         {
             foreach (var cardSO in playerSO.deck)

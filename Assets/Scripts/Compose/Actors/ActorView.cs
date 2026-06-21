@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Compose.Actors
 {
-    public class ActorPanel : MonoDul
+    public class ActorView : MonoDul
     {
         [SerializeField] private TMP_Text hp;
         [SerializeField] private Slider hpBar;

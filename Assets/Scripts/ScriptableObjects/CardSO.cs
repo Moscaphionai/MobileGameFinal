@@ -28,7 +28,6 @@ namespace ScriptableObjects
         public string name;
         public string nameEn;
         public string description;
-        public string descriptionEn;
         public CardRarity rarity;
         public int cost;
         public CardType type;

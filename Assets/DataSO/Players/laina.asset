@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   info:
     name: Laina
-    atk: 40
-    def: 30
-    hp: 340
+    atk: 60
+    def: 50
+    hp: 800
   deck:
   - {fileID: 11400000, guid: 74846faa54170da469d6bd99cdbdd9bb, type: 2}
   - {fileID: 11400000, guid: 74846faa54170da469d6bd99cdbdd9bb, type: 2}
