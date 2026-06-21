@@ -1,4 +1,4 @@
-﻿namespace Compose._3C.Actors
+﻿namespace Compose.Actors
 {
     public class EnemyPanel : ActorPanel
     {

@@ -1,6 +1,6 @@
 using ScriptableObjects.Actors;
 
-namespace Compose._3C.Actors
+namespace Compose.Actors
 {
     public sealed class EnemyData : ActorData
     {

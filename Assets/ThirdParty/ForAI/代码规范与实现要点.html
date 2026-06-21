@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MobileGameFinal 代码规范与实现要点</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #151b24;
+            --surface-2: #1c2430;
+            --border: #303b49;
+            --text: #e8edf3;
+            --muted: #aeb9c6;
+            --accent: #68d4c1;
+            --accent-2: #f1b56b;
+            --danger: #ff7b72;
+            --info: #75b7ff;
+            --ok: #7ee787;
+            --code: #0a0e14;
+        }
+
+        * { box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            margin: 0;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 10% 5%, rgba(104, 212, 193, 0.12), transparent 28rem),
+                radial-gradient(circle at 95% 12%, rgba(241, 181, 107, 0.10), transparent 30rem),
+                var(--bg);
+            font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+            line-height: 1.72;
+        }
+
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 270px minmax(0, 1fr);
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        aside {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            padding: 28px 20px;
+            border-right: 1px solid var(--border);
+            background: rgba(13, 17, 23, 0.82);
+            backdrop-filter: blur(14px);
+            overflow-y: auto;
+        }
+
+        .brand {
+            margin-bottom: 24px;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: linear-gradient(145deg, rgba(104, 212, 193, 0.12), rgba(28, 36, 48, 0.6));
+        }
+
+        .brand strong { display: block; font-size: 18px; color: var(--accent); }
+        .brand small { display: block; margin-top: 5px; color: var(--muted); }
+
+        nav a {
+            display: block;
+            margin: 3px 0;
+            padding: 7px 10px;
+            border-radius: 8px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        nav a:hover {
+            color: var(--text);
+            background: var(--surface-2);
+            text-decoration: none;
+        }
+
+        main { min-width: 0; padding: 56px clamp(28px, 5vw, 76px) 100px; }
+
+        header.hero {
+            margin-bottom: 42px;
+            padding: 34px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(104, 212, 193, 0.13), rgba(21, 27, 36, 0.9) 52%, rgba(241, 181, 107, 0.11));
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.26);
+        }
+
+        h1 { margin: 0 0 12px; font-size: clamp(30px, 4vw, 48px); line-height: 1.25; }
+        h2 { margin: 58px 0 18px; padding-top: 10px; font-size: 28px; color: var(--accent); }
+        h3 { margin: 30px 0 12px; font-size: 20px; color: var(--accent-2); }
+        h4 { margin: 22px 0 8px; font-size: 16px; color: var(--info); }
+        p { margin: 10px 0; }
+
+        .subtitle { max-width: 900px; color: var(--muted); font-size: 17px; }
+        .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+        .tag {
+            padding: 5px 10px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            color: var(--muted);
+            background: rgba(13, 17, 23, 0.5);
+            font-size: 13px;
+        }
+
+        section { scroll-margin-top: 26px; }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin: 18px 0;
+        }
+
+        .card {
+            padding: 18px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: linear-gradient(150deg, var(--surface), rgba(28, 36, 48, 0.72));
+        }
+
+        .card h3, .card h4 { margin-top: 0; }
+
+        .callout {
+            margin: 18px 0;
+            padding: 15px 18px;
+            border-left: 4px solid var(--info);
+            border-radius: 8px;
+            background: rgba(117, 183, 255, 0.09);
+        }
+
+        .callout.warning { border-color: var(--accent-2); background: rgba(241, 181, 107, 0.09); }
+        .callout.danger { border-color: var(--danger); background: rgba(255, 123, 114, 0.09); }
+        .callout.success { border-color: var(--ok); background: rgba(126, 231, 135, 0.08); }
+
+        table {
+            width: 100%;
+            margin: 16px 0 24px;
+            border-collapse: collapse;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 14px;
+        }
+
+        th, td { padding: 11px 13px; border: 1px solid var(--border); vertical-align: top; text-align: left; }
+        th { color: var(--accent); background: var(--surface-2); }
+        tr:nth-child(even) td { background: rgba(255, 255, 255, 0.015); }
+
+        code {
+            padding: 2px 6px;
+            border-radius: 5px;
+            color: #d2e8ff;
+            background: var(--code);
+            font-family: Consolas, "Cascadia Code", monospace;
+            font-size: 0.92em;
+        }
+
+        pre {
+            margin: 14px 0 22px;
+            padding: 17px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: #d9e6f2;
+            background: var(--code);
+            overflow-x: auto;
+            line-height: 1.55;
+        }
+
+        pre code { padding: 0; background: transparent; }
+
+        ul, ol { padding-left: 23px; }
+        li { margin: 6px 0; }
+
+        .flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: stretch;
+            gap: 9px;
+            margin: 18px 0 25px;
+        }
+
+        .flow .node {
+            flex: 1 1 145px;
+            min-width: 135px;
+            padding: 13px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: var(--surface);
+            text-align: center;
+        }
+
+        .flow .node strong { display: block; color: var(--accent-2); }
+        .flow .arrow { align-self: center; color: var(--muted); font-size: 20px; }
+
+        .checklist { list-style: none; padding-left: 0; }
+        .checklist li { position: relative; padding-left: 28px; }
+        .checklist li::before { content: "□"; position: absolute; left: 2px; color: var(--accent); font-weight: 700; }
+
+        footer {
+            margin-top: 68px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 900px) {
+            .layout { display: block; }
+            aside { position: static; width: auto; height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
+            nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+            main { padding: 34px 18px 70px; }
+            header.hero { padding: 24px; }
+            .flow .arrow { display: none; }
+        }
+
+        @media print {
+            body { color: #111; background: #fff; }
+            aside { display: none; }
+            .layout { display: block; max-width: none; }
+            main { padding: 0; }
+            header.hero, .card, table, pre { color: #111; background: #fff; box-shadow: none; }
+            h2, h3, h4, th, a { color: #111; }
+            code { color: #111; background: #eee; }
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside>
+        <div class="brand">
+            <strong>MobileGameFinal</strong>
+            <small>代码规范与实现要点</small>
+        </div>
+        <nav>
+            <a href="#basis">01. 文档依据</a>
+            <a href="#principles">02. 核心原则</a>
+            <a href="#architecture">03. 分层架构</a>
+            <a href="#folders">04. 目录与命名空间</a>
+            <a href="#naming">05. 命名规范</a>
+            <a href="#data">06. SO 与运行时数据</a>
+            <a href="#effects">07. 百分比效果</a>
+            <a href="#battle">08. 战斗与牌堆</a>
+            <a href="#map">09. 地图与节点</a>
+            <a href="#relic">10. 遗物与触发点</a>
+            <a href="#messages">11. Command 与 Event</a>
+            <a href="#unity">12. Unity 编码规则</a>
+            <a href="#current">13. 当前代码修正项</a>
+            <a href="#priority">14. 实现优先级</a>
+            <a href="#checklist">15. 提交检查表</a>
+        </nav>
+    </aside>
+
+    <main>
+        <header class="hero">
+            <h1>类杀戮尖塔项目<br>代码规范与实现要点</h1>
+            <p class="subtitle">
+                本文面向轻量课程作业，参考 <code>Template/Sts</code> 的数据驱动、回合管理、牌堆、地图和房间组织方式，
+                同时沿用当前工程已有的 <code>Compose</code>、<code>ScriptableObjects</code>、<code>Messages</code> 分层。
+                目标是让玩法能完整落地，而不是复刻参考工程的全部框架复杂度。
+            </p>
+            <div class="meta">
+                <span class="tag">Unity 2022.3</span>
+                <span class="tag">C#</span>
+                <span class="tag">ScriptableObject 数据驱动</span>
+                <span class="tag">Command / Event</span>
+                <span class="tag">百分比卡牌</span>
+                <span class="tag">课程作业范围</span>
+            </div>
+        </header>
+
+        <section id="basis">
+            <h2>01. 文档依据与适用范围</h2>
+            <p>本规范综合以下三类信息：</p>
+            <ul>
+                <li>玩法文档：三层地图、节点探索、百分比卡牌、属性成长、回合战斗、遗物和局内重置。</li>
+                <li>参考工程：<code>CardDataSO</code>、<code>Effect</code>、<code>CardDeck</code>、<code>TurnBaseManager</code>、<code>MapGenerator</code>、<code>RelicManager</code> 等职责划分。</li>
+                <li>当前工程：<code>ActorData</code>、<code>CardData</code>、<code>EffectData</code>、<code>BattleManager</code> 状态机，以及 Command/Event 队列。</li>
+            </ul>
+            <div class="callout success">
+                <strong>总决策：</strong>保留当前工程的“配置数据、运行时数据、流程管理、UI 显示、消息通信”结构；参考 Sts 的职责与命名，
+                但不照搬 Addressables、SO 事件资产、对象池、Spine 或一房间一场景的复杂实现。
+            </div>
+            <div class="callout warning">
+                <strong>玩法文档待统一：</strong>战斗准备和出牌段落仍提到“消耗堆/消耗牌”，最新卡牌流转段落未再描述它。
+                推荐保留 <code>Exhaust</code> 牌堆和消耗标签，因为已有生命周期定义依赖它；若最终决定删除，应同时删除所有相关字段和规则，不能只隐藏 UI。
+            </div>
+            <div class="callout warning">
+                <strong>属性数量待统一：</strong>玩法文档写“角色拥有四项基础属性”，但表格和 Domain 只定义了 ATK、DEF、HP 三项。
+                本规范暂按三项属性实现；在第四项属性被正式命名并说明用途前，不在 <code>ActorInfo</code> 中增加占位字段。
+            </div>
+        </section>
+
+        <section id="principles">
+            <h2>02. 核心开发原则</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>配置不承载局内状态</h3>
+                    <p><code>*SO</code> 只保存编辑器配置。生命、费用变化、牌堆位置、升级状态必须写入 <code>*Data</code>。</p>
+                </div>
+                <div class="card">
+                    <h3>Manager 只管理一个领域</h3>
+                    <p><code>RunManager</code> 管一局，<code>BattleManager</code> 管一场战斗，<code>MapManager</code> 管当前层地图，不建立万能 <code>GameManager</code>。</p>
+                </div>
+                <div class="card">
+                    <h3>Panel 不计算玩法</h3>
+                    <p>Panel 只根据 Data 渲染并发送用户意图，不能直接扣血、加金币、修改牌堆。</p>
+                </div>
+                <div class="card">
+                    <h3>公式只有一个入口</h3>
+                    <p>所有卡牌、敌人和遗物产生的数值都通过 <code>EffectResolver</code>，禁止在各 UI 或敌人脚本里重复计算。</p>
+                </div>
+                <div class="card">
+                    <h3>先完成一层，再复制内容</h3>
+                    <p>代码结构支持三层，但先验收“起点至 Boss 的一层完整循环”，再用数据配置扩展第二、第三层。</p>
+                </div>
+                <div class="card">
+                    <h3>确定性优先</h3>
+                    <p>敌人行动、回合阶段、地图保障都应可复现和测试。随机只负责选项，不负责修补流程错误。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture">
+            <h2>03. 推荐分层架构</h2>
+            <div class="flow">
+                <div class="node"><strong>ScriptableObject</strong>静态配置</div>
+                <div class="arrow">→</div>
+                <div class="node"><strong>Runtime Data</strong>局内可变状态</div>
+                <div class="arrow">→</div>
+                <div class="node"><strong>Manager / Resolver</strong>规则和流程</div>
+                <div class="arrow">→</div>
+                <div class="node"><strong>Event</strong>结果通知</div>
+                <div class="arrow">→</div>
+                <div class="node"><strong>Panel / View</strong>渲染反馈</div>
+            </div>
+
+            <table>
+                <thead><tr><th>层</th><th>代表类型</th><th>允许做什么</th><th>禁止做什么</th></tr></thead>
+                <tbody>
+                <tr><td>配置层</td><td><code>CardSO</code>、<code>PlayerSO</code>、<code>EnemySO</code>、<code>RelicSO</code></td><td>保存可编辑的原始配置和资源引用</td><td>保存当前 HP、当前金币、当前牌堆</td></tr>
+                <tr><td>数据层</td><td><code>CardData</code>、<code>PlayerData</code>、<code>EnemyData</code>、<code>RunData</code></td><td>保存运行时状态并保证数值边界</td><td>查找场景对象、操作按钮</td></tr>
+                <tr><td>规则层</td><td><code>BattleManager</code>、<code>CardDeck</code>、<code>EffectResolver</code></td><td>验证命令、推进状态、修改 Data</td><td>直接拼装复杂 UI</td></tr>
+                <tr><td>通信层</td><td><code>*Command</code>、<code>*Event</code></td><td>传递意图和已发生事实</td><td>包含业务算法或长期状态</td></tr>
+                <tr><td>显示层</td><td><code>CardPanel</code>、<code>ActorPanel</code>、<code>MapPanel</code></td><td>渲染、动画、触控输入</td><td>越过 Manager 直接改 Data</td></tr>
+                </tbody>
+            </table>
+
+            <h3>管理器边界</h3>
+            <table>
+                <thead><tr><th>类型</th><th>唯一职责</th><th>主要持有数据</th></tr></thead>
+                <tbody>
+                <tr><td><code>ComposeManager</code></td><td>启动组合根，创建或连接顶层服务</td><td>场景级依赖引用，不保存玩法细节</td></tr>
+                <tr><td><code>RunManager</code></td><td>开始、推进、结束一局游戏</td><td>玩家、永久牌组、遗物、金币、楼层、统计</td></tr>
+                <tr><td><code>MapManager</code></td><td>生成当前层并验证节点可达状态</td><td>当前层布局、当前节点、可选节点</td></tr>
+                <tr><td><code>BattleManager</code></td><td>驱动一场战斗的状态机与胜负</td><td>玩家、敌人列表、回合、轮次、战斗状态</td></tr>
+                <tr><td><code>EnemyManager</code></td><td>维护多敌人顺序、目标和意图</td><td>存活敌人列表、行动索引</td></tr>
+                <tr><td><code>CardManager</code></td><td>卡牌库、奖励生成、永久牌组增删升级</td><td>卡牌配置索引、奖励候选</td></tr>
+                <tr><td><code>CardDeck</code></td><td>一场战斗内的牌堆流转</td><td>Draw、Hand、Discard、Exhaust、PlayedThisTurn</td></tr>
+                <tr><td><code>RelicManager</code></td><td>遗物获取、去重与触发分发</td><td>当前遗物列表</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="folders">
+            <h2>04. 目录与命名空间</h2>
+            <p>参考工程按 Character、Card、Manage、Room、Relic、UI 分组；当前工程已有更明确的顶层边界。建议最终目录如下：</p>
+            <pre><code>Assets/Scripts/
+├─ Compose/
+│  ├─ Actors/               namespace Compose.Actors
+│  ├─ Battle/               namespace Compose.Battle
+│  ├─ Card/                 namespace Compose.Card
+│  ├─ Effects/              namespace Compose.Effects
+│  ├─ Map/                  namespace Compose.Map
+│  ├─ Rooms/                namespace Compose.Rooms
+│  ├─ Relics/               namespace Compose.Relics
+│  └─ UI/                   namespace Compose.UI
+├─ Messages/
+│  ├─ Commands/Battle/
+│  ├─ Commands/Run/
+│  └─ Events/Battle/
+├─ ScriptableObjects/
+│  ├─ Actors/
+│  ├─ Cards/
+│  ├─ Enemies/
+│  ├─ Map/
+│  └─ Relics/
+└─ Utilities/</code></pre>
+
+            <div class="callout warning">
+                当前目录 <code>3C/Actors</code> 迫使命名空间写成 <code>Compose._3C.Actors</code>，可读性较差。
+                已有脚本可暂时保留以避免 Unity 引用变动，但新代码不要继续扩展 <code>_3C</code>；整理阶段再通过 Unity Editor 移动到 <code>Compose/Actors</code>。
+            </div>
+            <div class="callout">
+                当前 <code>Affair</code> 目录不建议继续使用。叙事事件属于房间节点，推荐放入 <code>Compose.Rooms</code>，类型命名为
+                <code>EventRoom</code>、<code>RestRoom</code>，避免与 <code>Messages.Events</code> 混淆。
+            </div>
+        </section>
+
+        <section id="naming">
+            <h2>05. 命名规范</h2>
+            <table>
+                <thead><tr><th>对象</th><th>规则</th><th>正确示例</th><th>避免</th></tr></thead>
+                <tbody>
+                <tr><td>类、结构、枚举</td><td>PascalCase，名词或明确职责</td><td><code>BattleManager</code>、<code>EffectData</code></td><td><code>Dul</code>、<code>Mgr</code></td></tr>
+                <tr><td>方法</td><td>PascalCase，以动词开头</td><td><code>StartBattle</code>、<code>DrawToHandSize</code></td><td><code>BattleStartDo</code></td></tr>
+                <tr><td>属性</td><td>PascalCase</td><td><code>CurrentHp</code>、<code>IsDead</code></td><td>公开可写字段</td></tr>
+                <tr><td>私有字段</td><td>camelCase，不加下划线</td><td><code>currentNode</code>、<code>playerSO</code></td><td><code>PlayerSO</code> 字段</td></tr>
+                <tr><td>Inspector 字段</td><td><code>[SerializeField] private</code> + camelCase</td><td><code>enemyPanel</code></td><td>无必要的 public 字段</td></tr>
+                <tr><td>局部变量和参数</td><td>camelCase，表达业务含义</td><td><code>targetEnemy</code>、<code>effectValue</code></td><td><code>obj</code>、<code>data1</code></td></tr>
+                <tr><td>布尔值</td><td>使用 Is、Has、Can、Should</td><td><code>IsExhausted</code>、<code>CanPlay</code></td><td><code>battleEnd</code></td></tr>
+                <tr><td>ScriptableObject</td><td>配置类型统一以 SO 结尾</td><td><code>MapConfigSO</code>、<code>RoomDataSO</code></td><td><code>MapConfigSo</code></td></tr>
+                <tr><td>运行时数据</td><td>以 Data 结尾</td><td><code>PlayerData</code>、<code>MapNodeData</code></td><td><code>PlayerInfoRuntime</code></td></tr>
+                <tr><td>Inspector 配置结构</td><td>以 Info 结尾</td><td><code>CardInfo</code>、<code>EnemyActionInfo</code></td><td>与 Data 混用</td></tr>
+                <tr><td>UI 显示组件</td><td>Panel 或 View 二选一；当前项目统一 Panel</td><td><code>CardPanel</code>、<code>RewardPanel</code></td><td><code>CardUIPrefab</code> 类名</td></tr>
+                <tr><td>用户意图消息</td><td>动词 + 对象 + Command</td><td><code>PlayCardCommand</code></td><td><code>CardCommand</code></td></tr>
+                <tr><td>结果通知</td><td>过去式 + Event</td><td><code>CardPlayedEvent</code>、<code>BattleEndedEvent</code></td><td><code>DoBattleEvent</code></td></tr>
+                </tbody>
+            </table>
+
+            <h3>统一枚举命名</h3>
+            <pre><code>CardType: Attack, Skill, Enhance
+CardRarity: Starter, Common, Rare, Legendary
+EffectType: Damage, Shield, Heal, ApplyStatus
+EffectDomain: Atk, Def, Hp
+EffectTarget: Player, SingleEnemy, AllEnemies
+RoomType: MinorEnemy, EliteEnemy, Event, Rest, Boss
+BattleTurn: None, Player, Enemy
+BattleResult: None, Victory, Defeat</code></pre>
+            <p>现有 <code>Basis</code>、<code>Legend</code>、<code>AllEnemy</code> 应在大量资产创建前统一。若资产已经使用这些枚举，改名时必须检查 Inspector 序列化值，不能直接假设名称变化不会影响数据。</p>
+
+            <h3>文件规则</h3>
+            <ul>
+                <li>每个 MonoBehaviour 和 ScriptableObject 单独一个文件，文件名必须与类型名一致。</li>
+                <li>小型枚举和仅服务于同一配置的 <code>*Info</code> 可以与对应 SO 放在一个文件中。</li>
+                <li>不要继续使用 <code>Crad</code>、<code>Manage</code>、<code>SceneLoadManage</code> 等参考工程中的拼写问题，新代码统一为 <code>Card</code>、<code>Managers</code> 或具体领域目录、<code>SceneLoadManager</code>。</li>
+                <li>英文名以清晰为先，不使用拼音，不用含义不明的缩写。</li>
+            </ul>
+        </section>
+
+        <section id="data">
+            <h2>06. ScriptableObject 与运行时数据</h2>
+            <h3>配置层</h3>
+            <p><code>CardSO</code>、<code>PlayerSO</code> 和 <code>EnemySO</code> 的方向正确。它们是模板，不是本局实例。</p>
+            <ul>
+                <li><code>PlayerSO</code>：基础 ATK、DEF、HP，初始牌组，初始遗物。</li>
+                <li><code>CardSO</code>：ID、多语言名称、费用、类型、稀有度、标签、效果列表。</li>
+                <li><code>EnemySO</code>：基础属性、敌人图片、预设行动序列。</li>
+                <li><code>RelicSO</code>：ID、描述、稀有度、触发时机和效果。</li>
+                <li><code>FloorConfigSO</code>：楼层深度、节点权重、最低保障、Boss 和敌人池。</li>
+            </ul>
+
+            <h3>运行时层</h3>
+            <ul>
+                <li><code>ActorData</code> 保存基础属性、当前 HP、当前格挡和状态层数。</li>
+                <li><code>CardData</code> 保存本局费用、升级次数、标签和运行时效果副本。</li>
+                <li><code>RunData</code> 保存金币、永久牌组、遗物、楼层、地图进度和统计。</li>
+                <li><code>BattleContext</code> 保存玩家、敌人列表、牌堆、回合和随机源。</li>
+            </ul>
+
+            <div class="callout danger">
+                <strong>必须区分 DEF 与格挡：</strong><code>Defense</code> 是角色基础属性，用于百分比公式；<code>Block</code> 是战斗中的临时护盾。
+                当前 <code>ActorData</code> 只有 Defense，且 <code>TakeDamage</code> 直接扣 HP，需要增加 <code>CurrentBlock</code>、<code>GainBlock</code>、<code>ResetBlock</code>，伤害必须先消耗格挡。
+            </div>
+
+            <h3>数据边界</h3>
+            <ul>
+                <li>HP 范围为 <code>0..MaxHp</code>。</li>
+                <li>ATK、DEF、费用、格挡不得小于 0，除非未来明确设计负属性。</li>
+                <li>金币不得小于 0；购买必须先验证余额，再一次性扣款。</li>
+                <li>卡牌 ID、遗物 ID、节点 ID 在各自域内唯一。</li>
+                <li>一局结束后新建 <code>RunData</code>，不能在旧对象上逐字段复位。</li>
+            </ul>
+        </section>
+
+        <section id="effects">
+            <h2>07. 百分比卡牌与效果解析</h2>
+            <h3>统一公式</h3>
+            <pre><code>DomainValue = Source.GetDomainValue(effect.Domain)
+FigureDelta = StatusResolver.GetFigureDelta(effect.Type, Source)
+FinalFigure = Max(0, effect.Figure + FigureDelta)
+RawValue = DomainValue * FinalFigure / 100f
+FinalValue = Mathf.RoundToInt(RawValue)</code></pre>
+            <p>所有结果统一使用整数。伤害、护盾和治疗都走同一公式，差异只存在于结果应用方式。</p>
+
+            <table>
+                <thead><tr><th>字段</th><th>职责</th><th>示例</th></tr></thead>
+                <tbody>
+                <tr><td><code>EffectType</code></td><td>决定结果如何应用</td><td>Damage、Shield、Heal</td></tr>
+                <tr><td><code>EffectDomain</code></td><td>决定读取 Source 的哪项基础属性</td><td>Atk、Def、Hp</td></tr>
+                <tr><td><code>Figure</code></td><td>百分比整数</td><td>120 表示 120%</td></tr>
+                <tr><td><code>EffectTarget</code></td><td>决定应用对象</td><td>Player、SingleEnemy、AllEnemies</td></tr>
+                </tbody>
+            </table>
+
+            <h3>状态对 Figure 的影响</h3>
+            <ul>
+                <li>力量层数只影响 Damage 类型，每层修改 10 个百分点。</li>
+                <li>抗性层数只影响 Shield 类型，每层修改 10 个百分点。</li>
+                <li>上升使用正层数，下降使用负层数；最终 Figure 最低为 0。</li>
+                <li>Heal 默认不受力量或抗性影响，除非未来新增专门状态。</li>
+            </ul>
+
+            <h3>效果执行边界</h3>
+            <p>推荐增加 <code>EffectContext</code> 和 <code>EffectResolver</code>。Context 显式携带 Source、选中目标、所有敌人和 BattleContext，避免参考工程中在 Effect 内使用 <code>FindAnyObjectByType</code>。</p>
+            <pre><code>EffectContext
+├─ Source: ActorData
+├─ SelectedTarget: ActorData
+├─ EnemyTargets: IReadOnlyList&lt;EnemyData&gt;
+├─ Card: CardData
+└─ Battle: BattleContext</code></pre>
+            <div class="callout danger">
+                当前 <code>EffectInfo</code> 有 <code>target</code>，但 <code>EffectData</code> 构造时没有复制 Target。继续开发前必须补齐，否则单体敌人、全体敌人和玩家目标会在运行时丢失。
+            </div>
+            <p>同一张卡的效果按列表顺序执行。整张卡结算结束后再检查奖励流程，但每个伤害效果后都应更新死亡状态，死亡敌人不能继续作为后续单体目标。</p>
+        </section>
+
+        <section id="battle">
+            <h2>08. 战斗状态机与牌堆约束</h2>
+            <h3>战斗状态</h3>
+            <pre><code>None → Preparing → PlayerTurn → EnemyTurn → PlayerTurn ... → Victory / Defeat</code></pre>
+            <p>当前 <code>BattleManager</code> 已有 None、Player、Enemy 状态雏形。需要补充准备和结束状态，确保结束后任何命令都无法继续推进回合。</p>
+
+            <h3>战斗准备顺序</h3>
+            <ol>
+                <li>从永久牌组 duplicate 出本场卡牌实例并洗入 Draw。</li>
+                <li>清空 Hand、Discard、Exhaust、PlayedThisTurn。</li>
+                <li>将固有牌移入 Hand。按“固有不占抽牌数”解释，再执行基础抽牌 5 张，手牌总数仍不得超过 10。</li>
+                <li>触发 BattleStart 遗物和能力。</li>
+                <li>创建敌人列表并准备所有敌人意图。</li>
+                <li>进入玩家首回合。</li>
+            </ol>
+
+            <h3>玩家回合顺序</h3>
+            <ol>
+                <li>能量恢复至 3。</li>
+                <li>玩家格挡清零。</li>
+                <li>结算中毒并减少层数，若死亡立即结束战斗。</li>
+                <li>触发回合开始遗物和状态。</li>
+                <li>抽牌至手牌数量为 5，手牌上限 10。</li>
+                <li>允许 PlayCard 和 EndPlayerTurn 命令。</li>
+                <li>结束时将剩余手牌移入 Discard，触发回合结束效果。</li>
+            </ol>
+
+            <h3>敌人回合顺序</h3>
+            <ol>
+                <li>锁定卡牌、结束回合按钮和目标选择。</li>
+                <li>按画面从左到右依次处理存活敌人。</li>
+                <li>每名敌人先结算中毒与状态；死亡则跳过行动。</li>
+                <li>执行当前可见意图，刷新下一意图。</li>
+                <li>全部敌人行动完成后进入下一玩家回合。</li>
+            </ol>
+
+            <h3>牌堆不变量</h3>
+            <table>
+                <thead><tr><th>牌堆</th><th>规则</th></tr></thead>
+                <tbody>
+                <tr><td>Draw</td><td>只包含可被抽取的卡；空时才允许从 Discard 洗回。</td></tr>
+                <tr><td>Hand</td><td>上限 10；抽满规则的目标是 5，不是每回合固定再抽 5。</td></tr>
+                <tr><td>Discard</td><td>上回合或更早使用/弃掉的卡；可参与洗牌。</td></tr>
+                <tr><td>PlayedThisTurn</td><td>本回合已经打出的非消耗牌，回合结束后才进入 Discard，保证不会在同回合立即洗回。</td></tr>
+                <tr><td>Exhaust</td><td>消耗牌进入此堆，本场战斗不可再次使用；是否保留需按最终玩法决定。</td></tr>
+                </tbody>
+            </table>
+            <div class="callout success">
+                任意时刻，一张战斗卡牌实例只能位于一个牌堆。调试版可在每次移动后断言：
+                <code>Draw + Hand + Discard + PlayedThisTurn + Exhaust = BattleDeckTotal</code>。
+            </div>
+
+            <h3>出牌验证顺序</h3>
+            <ol>
+                <li>当前状态必须为 PlayerTurn。</li>
+                <li>卡牌必须真实存在于 Hand。</li>
+                <li>当前能量必须大于等于费用。</li>
+                <li>目标必须符合 EffectTarget，且目标存活。</li>
+                <li>扣除能量并将牌移出 Hand。</li>
+                <li>依次执行效果。</li>
+                <li>移动到 PlayedThisTurn 或 Exhaust。</li>
+                <li>检查全部敌人死亡或玩家死亡。</li>
+            </ol>
+        </section>
+
+        <section id="map">
+            <h2>09. 三叉树地图、节点和整备点</h2>
+            <h3>地图数据结构</h3>
+            <p><code>MapNodeData</code> 至少包含 ID、深度、分支位置、RoomType、RoomState、下一节点 ID 列表和是否已完成。运行时状态不要写回 <code>FloorConfigSO</code>。</p>
+
+            <div class="callout warning">
+                “每次三选一、路径不汇合、每层共 12 至 16 个节点”若解释为严格完整三叉树，会产生指数级节点数量。
+                课程版统一解释为：<strong>每层路径深度为 12 至 16 步，每步向玩家提供最多 3 个候选节点</strong>。
+                可以只生成当前路径前方的候选，或允许显示连线汇合；不要生成完整的 3 的 N 次方树。
+            </div>
+
+            <h3>地图生成约束</h3>
+            <ul>
+                <li>每层最后一步固定 Boss。</li>
+                <li>每层至少包含 1 个 Rest、1 个 EliteEnemy。</li>
+                <li>最新版没有独立 Shop 节点，不再生成 Shop。</li>
+                <li>同一步的三个候选应尽量使用不同 RoomType，避免出现三个完全相同选择。</li>
+                <li>进入节点后将其设为 Visited，只解锁它的 NextNodes，不能回退。</li>
+                <li>随机生成完成后执行一次保障修正，不要在玩家游玩中临时插入缺失节点。</li>
+            </ul>
+
+            <h3>节点职责</h3>
+            <table>
+                <thead><tr><th>节点</th><th>核心流程</th><th>奖励或代价</th></tr></thead>
+                <tbody>
+                <tr><td>MinorEnemy</td><td>普通战斗</td><td>普通卡牌三选一、金币</td></tr>
+                <tr><td>EliteEnemy</td><td>精英战斗</td><td>遗物、金币</td></tr>
+                <tr><td>Event</td><td>选择叙事选项，可能转入战斗</td><td>卡牌、金币、属性、诅咒等</td></tr>
+                <tr><td>Rest</td><td>综合整备菜单</td><td>恢复、锻造、付费选牌或删牌</td></tr>
+                <tr><td>Boss</td><td>楼层最终战</td><td>稀有卡三选一、遗物、大量金币</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Rest 综合整备点</h3>
+            <p>最新版将商店能力合并到 Rest。界面可展示四种操作，但一次节点允许执行几项必须由配置固定。课程版建议每次只允许选择一项：</p>
+            <ul>
+                <li>休息：回复最大 HP 的 30%，结果不超过 MaxHp。</li>
+                <li>锻造：选择一张可升级卡，Figure 增加 15% 至 25% 或费用降低 1；每张牌的升级规则写在 CardSO。</li>
+                <li>付费选牌：支付固定金币，从 3 张随机卡中选择 1 张。</li>
+                <li>删牌：费用按本局删牌次数计算，75、125、175，以后每次增加 50。</li>
+            </ul>
+            <p>所有整备操作采用“先验证、再扣款、再修改数据、最后发布事件”的事务顺序，防止余额不足时仍然拿牌或删牌。</p>
+        </section>
+
+        <section id="relic">
+            <h2>10. 遗物与生命周期触发点</h2>
+            <p>遗物使用数据驱动，但不要为每个遗物在 Manager 中写特例。每个 <code>RelicSO</code> 配置 Trigger 和 Effect 列表，由 <code>RelicManager</code> 在明确时机触发。</p>
+            <table>
+                <thead><tr><th>Trigger</th><th>触发时机</th></tr></thead>
+                <tbody>
+                <tr><td><code>RunStart</code></td><td>一局初始化完成后</td></tr>
+                <tr><td><code>BattleStart</code></td><td>牌堆与敌人准备完毕后</td></tr>
+                <tr><td><code>TurnStart</code></td><td>玩家回合开始阶段</td></tr>
+                <tr><td><code>CardPlayed</code></td><td>卡牌效果结算完成后</td></tr>
+                <tr><td><code>BattleWon</code></td><td>临时状态清理前或后，顺序必须固定</td></tr>
+                <tr><td><code>RoomEntered</code></td><td>地图节点确认进入后</td></tr>
+                </tbody>
+            </table>
+            <ul>
+                <li>初始遗物由 PlayerSO 引用，新游戏时加入 RunData。</li>
+                <li>同一遗物默认不可重复，除非配置显式允许叠加。</li>
+                <li>属性型遗物修改 RunData 的基础属性；战斗临时 Buff 修改 BattleContext，不写回 SO。</li>
+                <li>触发顺序使用列表顺序或 priority，必须稳定，不能依赖 Unity 场景对象的查找顺序。</li>
+            </ul>
+        </section>
+
+        <section id="messages">
+            <h2>11. Command、Event 与状态机</h2>
+            <h3>语义规则</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>Command 是请求</h3>
+                    <p>UI 发送“我要做什么”，例如 <code>PlayCardCommand</code>。Manager 可以因状态或资源不足而拒绝。</p>
+                </div>
+                <div class="card">
+                    <h3>Event 是事实</h3>
+                    <p>Manager 发布“已经发生什么”，例如 <code>CardPlayedEvent</code>。监听者不能撤销事实。</p>
+                </div>
+            </div>
+
+            <table>
+                <thead><tr><th>领域</th><th>建议 Command</th><th>建议 Event</th></tr></thead>
+                <tbody>
+                <tr><td>一局</td><td><code>StartRunCommand</code>、<code>AbandonRunCommand</code></td><td><code>RunStartedEvent</code>、<code>RunEndedEvent</code></td></tr>
+                <tr><td>地图</td><td><code>SelectRoomCommand</code></td><td><code>RoomEnteredEvent</code>、<code>MapUpdatedEvent</code></td></tr>
+                <tr><td>战斗</td><td><code>StartBattleCommand</code>、<code>EndPlayerTurnCommand</code></td><td><code>BattleStartedEvent</code>、<code>BattleTurnChangedEvent</code>、<code>BattleEndedEvent</code></td></tr>
+                <tr><td>卡牌</td><td><code>PlayCardCommand</code>、<code>SelectRewardCardCommand</code></td><td><code>CardPlayedEvent</code>、<code>CardAddedEvent</code></td></tr>
+                <tr><td>整备</td><td><code>RestCommand</code>、<code>UpgradeCardCommand</code>、<code>RemoveCardCommand</code></td><td><code>PlayerRestedEvent</code>、<code>CardUpgradedEvent</code>、<code>CardRemovedEvent</code></td></tr>
+                </tbody>
+            </table>
+
+            <h3>监听规范</h3>
+            <ul>
+                <li><code>OnEnable</code> 中 AddListener，必须在 <code>OnDisable</code> 中使用同一个方法引用 RemoveListener。</li>
+                <li>禁止使用无法注销的匿名 lambda 订阅长期事件。</li>
+                <li>Command/Event 的 payload 只放必要数据，不传场景 GameObject 作为长期状态。</li>
+                <li>同一命令只有一个领域 Manager 负责修改核心状态，其余模块监听结果 Event。</li>
+                <li>EventQueue 的 priority 只用于明确生命周期顺序，不用来掩盖循环依赖。</li>
+            </ul>
+
+            <h3>异步规则</h3>
+            <ul>
+                <li>UniTask 只用于敌人依次行动、动画等待、面板过渡和场景加载。</li>
+                <li>业务状态先切换，再等待表现；不能等动画回调后才锁定输入。</li>
+                <li>异步任务绑定 GameObject 销毁 CancellationToken，禁止离开场景后继续修改 UI。</li>
+                <li>避免 <code>async void</code>；确实需要 fire-and-forget 时明确调用 <code>Forget()</code> 并保证异常可见。</li>
+            </ul>
+        </section>
+
+        <section id="unity">
+            <h2>12. Unity 与 C# 编码规则</h2>
+            <h3>序列化与引用</h3>
+            <ul>
+                <li>Inspector 引用使用 <code>[SerializeField] private</code>，外部只读需求通过属性暴露。</li>
+                <li>课程规模优先显式 Inspector 引用，不引入 Addressables。</li>
+                <li>禁止在 Effect、Data、每帧 Update 中使用 <code>Find*</code> 或标签查找。</li>
+                <li>场景依赖在 Awake/Init 时注入或缓存，不在出牌时临时查找。</li>
+            </ul>
+
+            <h3>生命周期</h3>
+            <ul>
+                <li><code>Awake</code>：建立自身内部状态和缓存组件。</li>
+                <li><code>OnEnable/OnDisable</code>：成对注册和注销消息。</li>
+                <li><code>Start</code>：仅用于依赖其他已 Awake 对象的首次展示。</li>
+                <li><code>Update</code>：只处理必须逐帧更新的表现，不轮询胜负、按钮或回合。</li>
+            </ul>
+
+            <h3>方法与控制流</h3>
+            <ul>
+                <li>先使用 guard clause 拒绝非法状态，减少多层 if 嵌套。</li>
+                <li>一个方法只做一个阶段；超过约 40 行时检查是否混合了验证、修改和渲染。</li>
+                <li>魔法数字放入配置 SO 或命名常量，例如 3 能量、5 手牌目标、10 手牌上限。</li>
+                <li>随机数由 Manager 集中调用；需要测试时允许注入种子。</li>
+                <li>注释解释规则原因和不直观顺序，不重复描述代码表面行为。</li>
+            </ul>
+
+            <h3>Singleton 使用边界</h3>
+            <p>顶层 Manager 可沿用当前 <code>MonoSingleton</code>，普通 Actor、Card、Panel、Room 不得做 Singleton。Singleton 必须防重复实例，并在销毁时清理 Instance，避免场景重载后指向已销毁对象。</p>
+
+            <h3>UI 规则</h3>
+            <ul>
+                <li>Panel 的公开入口统一为 <code>Render(Data)</code>、<code>Show()</code>、<code>Hide()</code>。</li>
+                <li>按钮点击只发送 Command，不直接调用 Data 的 Set/Take 方法。</li>
+                <li>目标选择期间明确高亮可选敌人；全体和玩家目标不进入单体选择模式。</li>
+                <li>敌人意图显示使用 EffectResolver 的预览值，不能单独写一套 UI 公式。</li>
+            </ul>
+        </section>
+
+        <section id="current">
+            <h2>13. 当前代码需要优先修正的契约</h2>
+            <table>
+                <thead><tr><th>位置</th><th>当前情况</th><th>规范要求</th><th>优先级</th></tr></thead>
+                <tbody>
+                <tr><td><code>RunManager</code></td><td><code>OnDisable</code> 为空，监听不会注销</td><td>成对 RemoveListener；字段 <code>PlayerSO</code> 改为 <code>playerSO</code> 或删除</td><td>P0</td></tr>
+                <tr><td><code>EffectData</code></td><td>构造时遗漏 <code>EffectTarget</code></td><td>运行时数据必须完整复制 target</td><td>P0</td></tr>
+                <tr><td><code>ActorData</code></td><td>Defense 与格挡概念未分离，伤害直扣 HP</td><td>增加 CurrentBlock，伤害先扣格挡</td><td>P0</td></tr>
+                <tr><td><code>BattleManager</code></td><td>只持有单个 Enemy，缺少胜负状态</td><td>改为敌人列表，加入 Preparing、Victory、Defeat</td><td>P0</td></tr>
+                <tr><td><code>BattleManager</code></td><td>状态 Enter/Exit 为空</td><td>将回合开始/结束规则放入对应状态阶段</td><td>P0</td></tr>
+                <tr><td><code>CardData</code></td><td>尚无标签、升级和牌堆位置</td><td>支持 Innate、Exhaust、升级数据；位置由 CardDeck 管</td><td>P1</td></tr>
+                <tr><td><code>ComposeManager</code></td><td><code>Dul</code>、<code>MonoDul</code> 为空且命名不表意</td><td>不要继续扩展；无公共能力时直接继承 MonoBehaviour</td><td>P1</td></tr>
+                <tr><td><code>MonoSingleton</code></td><td>没有重复实例保护和销毁清理</td><td>增加重复保护和 OnDestroy 清理</td><td>P1</td></tr>
+                <tr><td><code>CardRarity</code></td><td><code>Basis</code>、<code>Legend</code> 不统一</td><td>资产量少时尽早改为 Starter、Legendary</td><td>P1</td></tr>
+                <tr><td><code>Compose._3C</code></td><td>命名空间为适配数字目录而加下划线</td><td>后续迁移到 <code>Compose.Actors</code></td><td>P2</td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+                修正现有脚本时必须保留 Unity 的 <code>.meta</code> 文件并通过 Unity Editor 移动资源。不要在文件系统中删除再新建同名脚本，否则 Prefab 和 Scene 上的脚本引用可能丢失。
+            </div>
+        </section>
+
+        <section id="priority">
+            <h2>14. 推荐实现优先级</h2>
+            <table>
+                <thead><tr><th>阶段</th><th>内容</th><th>完成标准</th></tr></thead>
+                <tbody>
+                <tr><td>P0 数据契约</td><td>Actor、Card、Effect、Target、Block、Energy、状态层数</td><td>百分比公式可用纯数据测试验证</td></tr>
+                <tr><td>P0 单场战斗</td><td>四牌堆、回合状态机、意图、单敌人胜负</td><td>可连续打完一场且无卡死</td></tr>
+                <tr><td>P1 多敌人</td><td>目标选择、全体效果、左到右行动</td><td>两名敌人的死亡与行动顺序正确</td></tr>
+                <tr><td>P1 一局数据</td><td>初始牌组、初始遗物、99 金币、奖励、HP 继承</td><td>连续完成多个节点，状态不丢失</td></tr>
+                <tr><td>P1 一层地图</td><td>12 至 16 步、三选一、普通/精英/事件/休息/Boss</td><td>起点到 Boss 完整闭环</td></tr>
+                <tr><td>P1 Rest 功能</td><td>恢复、锻造、付费选牌、删牌费用递增</td><td>每项都能正确验证并修改 RunData</td></tr>
+                <tr><td>P2 遗物内容</td><td>初始遗物、精英和 Boss 奖励、基础触发点</td><td>至少 5 件可实际生效的遗物</td></tr>
+                <tr><td>P2 三层扩展</td><td>复制 FloorConfig、敌人池、Boss 和事件内容</td><td>三层通关与战败均返回主菜单</td></tr>
+                <tr><td>P3 表现</td><td>动画、音效、数值飘字、地图连线美化</td><td>不影响规则正确性和触控</td></tr>
+                </tbody>
+            </table>
+            <div class="callout success">
+                课程作业的安全完成线是 P0 + P1。若时间不足，优先减少卡牌、敌人、遗物和事件数量，不删除核心生命周期或把三层逻辑复制成三套代码。
+            </div>
+        </section>
+
+        <section id="checklist">
+            <h2>15. 每次提交前检查表</h2>
+            <h3>结构</h3>
+            <ul class="checklist">
+                <li>新类型放在正确目录和命名空间，文件名与类型名一致。</li>
+                <li>SO 未保存任何局内可变状态。</li>
+                <li>Panel 未直接修改核心 Data。</li>
+                <li>Manager 没有接管其他领域的职责。</li>
+            </ul>
+
+            <h3>消息与生命周期</h3>
+            <ul class="checklist">
+                <li>OnEnable 的所有监听都在 OnDisable 注销。</li>
+                <li>Command 可以被合法拒绝，Event 使用过去式表示事实。</li>
+                <li>战斗结束后所有输入和异步行动停止。</li>
+                <li>一局结束后创建全新的 RunData。</li>
+            </ul>
+
+            <h3>玩法不变量</h3>
+            <ul class="checklist">
+                <li>HP、格挡、能量和金币不会出现非法负数。</li>
+                <li>DEF 是基础属性，Block 是临时护盾。</li>
+                <li>卡牌总数在各牌堆之间守恒，单张实例不会同时存在于两个牌堆。</li>
+                <li>本回合使用过的牌不会在同回合立刻洗回。</li>
+                <li>敌人意图显示值与最终结算使用同一公式。</li>
+                <li>全部敌人死亡才胜利，玩家死亡立即战败。</li>
+                <li>每层地图最低保障满足，Boss 位于最后一步。</li>
+            </ul>
+
+            <h3>Unity 验证</h3>
+            <ul class="checklist">
+                <li>Console 无红色错误和重复监听导致的重复执行。</li>
+                <li>场景重载后 Singleton 和事件引用仍正确。</li>
+                <li>鼠标与移动端触控均可完成出牌、选目标、结束回合和选节点。</li>
+                <li>不同分辨率下手牌、敌人意图和关键按钮仍可见。</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>生成位置：Assets/ThirdParty/ForAI/代码规范与实现要点.html</p>
+            <p>本文是实现约束文档，不包含 gameplay 代码修改。玩法规则发生变化时，应先更新本文中的数据契约和不变量，再开始改代码。</p>
+        </footer>
+    </main>
+</div>
+</body>
+</html>

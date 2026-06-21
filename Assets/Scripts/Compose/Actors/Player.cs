@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Compose.Card;
 using ScriptableObjects.Actors;
 
-namespace Compose._3C.Actors
+namespace Compose.Actors
 {
     public sealed class PlayerData : ActorData
     {

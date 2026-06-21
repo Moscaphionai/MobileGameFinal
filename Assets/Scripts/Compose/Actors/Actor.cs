@@ -2,7 +2,7 @@ using System;
 using ScriptableObjects.Actors;
 using UnityEngine;
 
-namespace Compose._3C.Actors
+namespace Compose.Actors
 {
     public abstract class ActorData
     {

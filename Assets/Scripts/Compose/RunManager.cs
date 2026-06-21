@@ -1,5 +1,5 @@
 ﻿using System;
-using Compose._3C.Actors;
+using Compose.Actors;
 using Messages;
 using Messages.Commands.Compose;
 using ScriptableObjects;

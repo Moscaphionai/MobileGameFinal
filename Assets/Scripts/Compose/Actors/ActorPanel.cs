@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Compose._3C.Actors
+namespace Compose.Actors
 {
     public class ActorPanel : MonoDul
     {

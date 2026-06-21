@@ -1,4 +1,4 @@
 [
-  {"id":0,"name":"打击","nameEn":"Strike","rarity":0,"cost":1,"type":0,"effectType0":0,"effectNum0":"{100:atk}","effectTarget0":1,"effectType1":"","effectNum1":"","effectTarget1":"","effectType2":"","effectNum2":"","effectTarget2":""},
-  {"id":1,"name":"防御","nameEn":"Defense","rarity":0,"cost":1,"type":1,"effectType0":1,"effectNum0":"{100:def}","effectTarget0":0,"effectType1":"","effectNum1":"","effectTarget1":"","effectType2":"","effectNum2":"","effectTarget2":""}
+{"id":0,"name":"打击","nameEn":"Strike","rarity":0,"cost":1,"type":0,"effectType0":0,"effectNum0":"{atk:100}","effectTarget0":1,"effectType1":"","effectNum1":"","effectTarget1":"","effectType2":"","effectNum2":"","effectTarget2":""},
+{"id":1,"name":"防御","nameEn":"Defense","rarity":0,"cost":1,"type":1,"effectType0":1,"effectNum0":"{def:100}","effectTarget0":0,"effectType1":"","effectNum1":"","effectTarget1":"","effectType2":"","effectNum2":"","effectTarget2":""}
 ]

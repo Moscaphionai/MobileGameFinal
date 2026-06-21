@@ -1,0 +1,18 @@
+using Compose.Actors;
+
+namespace Messages.Commands.Battle
+{
+    public sealed class StartBattleCommand : ICommand
+    {
+        public PlayerData player;
+        public EnemyData enemy;
+    }
+
+    public sealed class EndPlayerTurnCommand : ICommand
+    {
+    }
+
+    public sealed class EndEnemyTurnCommand : ICommand
+    {
+    }
+}
