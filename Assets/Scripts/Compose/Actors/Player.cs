@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using Compose.Card;
 using ScriptableObjects.Actors;
 
 namespace Compose.Actors
 {
+    [Serializable]
     public sealed class PlayerData : ActorData
     {
         public List<CardData> deck = new();
@@ -18,8 +20,6 @@ namespace Compose.Actors
 
     public sealed class Player : Actor
     {
-        public PlayerData PlayerData => (PlayerData)Data;
-
         public void Init(PlayerSO playerSO)
         {
             Init(new PlayerData(playerSO));

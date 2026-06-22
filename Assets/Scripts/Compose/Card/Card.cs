@@ -34,11 +34,6 @@ namespace Compose.Card
                 effects.Add(new EffectData(effect));
             }
         }
-
-        public void SetCost(int value)
-        {
-            cost = Math.Max(0, value);
-        }
     }
 
     public sealed class Card : MonoDul
@@ -50,13 +45,7 @@ namespace Compose.Card
         public void Init(CardSO cardSO)
         {
             data = new CardData(cardSO);
-            view.Render(data);
-        }
-
-        public void SetCost(int value)
-        {
-            data.SetCost(value);
-            view.Render(data);
+            Refresh();
         }
 
         public void Refresh()

@@ -11,8 +11,8 @@ namespace Compose
     {
         private BattleStateMachine fsm;
 
-        public PlayerData Player { get; private set; }
-        public EnemyData Enemy { get; private set; }
+        public PlayerData player;
+        public EnemyData enemy;
         public BattleTurn Turn => fsm.Current.Turn;
         public int Round { get; private set; }
 
@@ -58,14 +58,14 @@ namespace Compose
 
         private void StartBattle(StartBattleCommand command)
         {
-            Player = command.player;
-            Enemy = command.enemy;
+            player = command.player;
+            enemy = command.enemy;
             Round = 1;
 
             EventQueueManager.Instance.Publish(new BattleStartedEvent
             {
-                player = Player,
-                enemy = Enemy
+                player = player,
+                enemy = enemy
             });
 
             fsm.ChangeState(BattleTurn.Player);

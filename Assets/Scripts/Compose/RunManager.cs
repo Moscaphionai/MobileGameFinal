@@ -19,7 +19,7 @@ namespace Compose
 
         private void OnDisable()
         {
-            
+            CommandQueueManager.Instance.RemoveListener<RunStartCommand>(RunStart);
         }
         
         private void RunStart(RunStartCommand command)

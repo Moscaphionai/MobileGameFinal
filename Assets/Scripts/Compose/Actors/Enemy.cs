@@ -1,7 +1,9 @@
+using System;
 using ScriptableObjects.Actors;
 
 namespace Compose.Actors
 {
+    [Serializable]
     public sealed class EnemyData : ActorData
     {
         public EnemyData(EnemyInfo info) : base(info)
@@ -11,8 +13,6 @@ namespace Compose.Actors
 
     public sealed class Enemy : Actor
     {
-        public EnemyData EnemyData => (EnemyData)Data;
-
         public void Init(EnemySO enemySO)
         {
             Init(new EnemyData(enemySO.info));

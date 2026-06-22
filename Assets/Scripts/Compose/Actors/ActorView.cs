@@ -11,9 +11,9 @@ namespace Compose.Actors
 
         public void Render(ActorData data)
         {
-            hp.text = $"{data.CurrentHp} / {data.MaxHp}";
-            hpBar.maxValue = data.MaxHp;
-            hpBar.value = data.CurrentHp;
+            hp.text = $"{data.curHp} / {data.hp}";
+            hpBar.maxValue = data.hp;
+            hpBar.value = data.curHp;
         }
     }
 }
