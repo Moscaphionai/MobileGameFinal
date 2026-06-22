@@ -4,15 +4,15 @@ namespace Compose.Effects
 {
     public struct EffectData
     {
-        public EffectType Type { get; }
-        public int Figure { get; }
-        public EffectDomain Domain { get; }
+        public EffectType type;
+        public int magnification;
+        public EffectDomain domain;
 
         public EffectData(EffectInfo info)
         {
-            Type = info.type;
-            Figure = info.figure;
-            Domain = info.domain;
+            type = info.type;
+            magnification = info.magnification;
+            domain = info.domain;
         }
     }
 }

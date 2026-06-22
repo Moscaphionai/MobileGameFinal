@@ -313,8 +313,8 @@
                     <p>Panel 只根据 Data 渲染并发送用户意图，不能直接扣血、加金币、修改牌堆。</p>
                 </div>
                 <div class="card">
-                    <h3>公式只有一个入口</h3>
-                    <p>所有卡牌、敌人和遗物产生的数值都通过 <code>EffectResolver</code>，禁止在各 UI 或敌人脚本里重复计算。</p>
+                    <h3>效果通过事件结算</h3>
+                    <p>CardSO 的效果配置在出牌时转换为具体结算事件。Buff、遗物和目标 Actor 依次处理同一个事件，不由 Card 直接修改角色数据。</p>
                 </div>
                 <div class="card">
                     <h3>先完成一层，再复制内容</h3>
@@ -330,15 +330,15 @@
         <section id="architecture">
             <h2>03. 推荐分层架构</h2>
             <div class="flow">
-                <div class="node"><strong>ScriptableObject</strong>静态配置</div>
+                <div class="node"><strong>CardSO</strong>完整效果配置</div>
                 <div class="arrow">→</div>
-                <div class="node"><strong>Runtime Data</strong>局内可变状态</div>
+                <div class="node"><strong>Card Use</strong>解析类型与目标</div>
                 <div class="arrow">→</div>
-                <div class="node"><strong>Manager / Resolver</strong>规则和流程</div>
+                <div class="node"><strong>Typed Event</strong>只留 domain / figure / source / target</div>
                 <div class="arrow">→</div>
-                <div class="node"><strong>Event</strong>结果通知</div>
+                <div class="node"><strong>EventQueue</strong>Buff 与遗物依次修饰</div>
                 <div class="arrow">→</div>
-                <div class="node"><strong>Panel / View</strong>渲染反馈</div>
+                <div class="node"><strong>Target Actor</strong>匹配目标并接收</div>
             </div>
 
             <table>
@@ -346,8 +346,8 @@
                 <tbody>
                 <tr><td>配置层</td><td><code>CardSO</code>、<code>PlayerSO</code>、<code>EnemySO</code>、<code>RelicSO</code></td><td>保存可编辑的原始配置和资源引用</td><td>保存当前 HP、当前金币、当前牌堆</td></tr>
                 <tr><td>数据层</td><td><code>CardData</code>、<code>PlayerData</code>、<code>EnemyData</code>、<code>RunData</code></td><td>保存运行时状态并保证数值边界</td><td>查找场景对象、操作按钮</td></tr>
-                <tr><td>规则层</td><td><code>BattleManager</code>、<code>CardDeck</code>、<code>EffectResolver</code></td><td>验证命令、推进状态、修改 Data</td><td>直接拼装复杂 UI</td></tr>
-                <tr><td>通信层</td><td><code>*Command</code>、<code>*Event</code></td><td>传递意图和已发生事实</td><td>包含业务算法或长期状态</td></tr>
+                <tr><td>规则层</td><td><code>BattleManager</code>、<code>CardDeck</code>、<code>CardEffectEmitter</code></td><td>验证命令、推进状态、把配置转换为结算事件</td><td>直接跳过事件修改 Actor</td></tr>
+                <tr><td>通信层</td><td><code>*Command</code>、结算 <code>*Event</code>、结果 <code>*Event</code></td><td>让同一结算事件按优先级被修改并最终接收</td><td>携带 CardSO 的全部配置或长期状态</td></tr>
                 <tr><td>显示层</td><td><code>CardPanel</code>、<code>ActorPanel</code>、<code>MapPanel</code></td><td>渲染、动画、触控输入</td><td>越过 Manager 直接改 Data</td></tr>
                 </tbody>
             </table>
@@ -363,6 +363,7 @@
                 <tr><td><code>EnemyManager</code></td><td>维护多敌人顺序、目标和意图</td><td>存活敌人列表、行动索引</td></tr>
                 <tr><td><code>CardManager</code></td><td>卡牌库、奖励生成、永久牌组增删升级</td><td>卡牌配置索引、奖励候选</td></tr>
                 <tr><td><code>CardDeck</code></td><td>一场战斗内的牌堆流转</td><td>Draw、Hand、Discard、Exhaust、PlayedThisTurn</td></tr>
+                <tr><td><code>CardEffectEmitter</code></td><td>读取 CardSO 效果，解析目标并发布具体结算事件</td><td>不持有状态，只负责 EffectInfo 到 Event 的一次性转换</td></tr>
                 <tr><td><code>RelicManager</code></td><td>遗物获取、去重与触发分发</td><td>当前遗物列表</td></tr>
                 </tbody>
             </table>
@@ -384,7 +385,9 @@
 ├─ Messages/
 │  ├─ Commands/Battle/
 │  ├─ Commands/Run/
-│  └─ Events/Battle/
+│  ├─ Events/Battle/
+│  ├─ Events/Effects/       TakeDamageEvent / GainShieldEvent / HealEvent
+│  └─ Events/Results/       ActorDamagedEvent 等不可修改结果
 ├─ ScriptableObjects/
 │  ├─ Actors/
 │  ├─ Cards/
@@ -404,11 +407,11 @@
             <table>
                 <thead><tr><th>对象</th><th>规则</th><th>正确示例</th><th>避免</th></tr></thead>
                 <tbody>
-                <tr><td>类、结构、枚举</td><td>PascalCase，名词或明确职责</td><td><code>BattleManager</code>、<code>EffectData</code></td><td><code>Dul</code>、<code>Mgr</code></td></tr>
+                <tr><td>类、结构、枚举</td><td>PascalCase，名词或明确职责</td><td><code>BattleManager</code>、<code>TakeDamageEvent</code></td><td><code>Dul</code>、<code>Mgr</code></td></tr>
                 <tr><td>方法</td><td>PascalCase，以动词开头</td><td><code>StartBattle</code>、<code>DrawToHandSize</code></td><td><code>BattleStartDo</code></td></tr>
-                <tr><td>属性</td><td>PascalCase</td><td><code>CurrentHp</code>、<code>IsDead</code></td><td>公开可写字段</td></tr>
+                <tr><td>运行时 Data 字段</td><td>public + camelCase，便于 Play Mode Inspector 调试</td><td><code>currentHp</code>、<code>currentShield</code></td><td>只读自动属性隐藏运行时数据</td></tr>
                 <tr><td>私有字段</td><td>camelCase，不加下划线</td><td><code>currentNode</code>、<code>playerSO</code></td><td><code>PlayerSO</code> 字段</td></tr>
-                <tr><td>Inspector 字段</td><td><code>[SerializeField] private</code> + camelCase</td><td><code>enemyPanel</code></td><td>无必要的 public 字段</td></tr>
+                <tr><td>组件引用字段</td><td><code>[SerializeField] private</code> + camelCase</td><td><code>enemyPanel</code></td><td>把场景组件引用混入 Data</td></tr>
                 <tr><td>局部变量和参数</td><td>camelCase，表达业务含义</td><td><code>targetEnemy</code>、<code>effectValue</code></td><td><code>obj</code>、<code>data1</code></td></tr>
                 <tr><td>布尔值</td><td>使用 Is、Has、Can、Should</td><td><code>IsExhausted</code>、<code>CanPlay</code></td><td><code>battleEnd</code></td></tr>
                 <tr><td>ScriptableObject</td><td>配置类型统一以 SO 结尾</td><td><code>MapConfigSO</code>、<code>RoomDataSO</code></td><td><code>MapConfigSo</code></td></tr>
@@ -416,7 +419,8 @@
                 <tr><td>Inspector 配置结构</td><td>以 Info 结尾</td><td><code>CardInfo</code>、<code>EnemyActionInfo</code></td><td>与 Data 混用</td></tr>
                 <tr><td>UI 显示组件</td><td>Panel 或 View 二选一；当前项目统一 Panel</td><td><code>CardPanel</code>、<code>RewardPanel</code></td><td><code>CardUIPrefab</code> 类名</td></tr>
                 <tr><td>用户意图消息</td><td>动词 + 对象 + Command</td><td><code>PlayCardCommand</code></td><td><code>CardCommand</code></td></tr>
-                <tr><td>结果通知</td><td>过去式 + Event</td><td><code>CardPlayedEvent</code>、<code>BattleEndedEvent</code></td><td><code>DoBattleEvent</code></td></tr>
+                <tr><td>结算事件</td><td>动作语义 + Event，允许在管线中修改</td><td><code>TakeDamageEvent</code>、<code>GainShieldEvent</code></td><td><code>EffectEvent</code></td></tr>
+                <tr><td>结果通知</td><td>过去式 + Event，发布后不再修改</td><td><code>ActorDamagedEvent</code>、<code>BattleEndedEvent</code></td><td><code>DoBattleEvent</code></td></tr>
                 </tbody>
             </table>
 
@@ -454,67 +458,180 @@ BattleResult: None, Victory, Defeat</code></pre>
 
             <h3>运行时层</h3>
             <ul>
-                <li><code>ActorData</code> 保存基础属性、当前 HP、当前格挡和状态层数。</li>
-                <li><code>CardData</code> 保存本局费用、升级次数、标签和运行时效果副本。</li>
+                <li><code>ActorData</code> 保存基础属性、当前 HP、当前 Shield 和状态层数。</li>
+                <li><code>CardData</code> 保存 CardSO 引用、本局费用、升级次数、标签和实例 ID；不复制 CardSO 的效果列表。</li>
                 <li><code>RunData</code> 保存金币、永久牌组、遗物、楼层、地图进度和统计。</li>
                 <li><code>BattleContext</code> 保存玩家、敌人列表、牌堆、回合和随机源。</li>
             </ul>
 
             <div class="callout danger">
-                <strong>必须区分 DEF 与格挡：</strong><code>Defense</code> 是角色基础属性，用于百分比公式；<code>Block</code> 是战斗中的临时护盾。
-                当前 <code>ActorData</code> 只有 Defense，且 <code>TakeDamage</code> 直接扣 HP，需要增加 <code>CurrentBlock</code>、<code>GainBlock</code>、<code>ResetBlock</code>，伤害必须先消耗格挡。
+                <strong>必须区分 DEF 与 Shield：</strong><code>Defense</code> 是角色基础属性，用于百分比公式；<code>Shield</code> 是战斗中的临时护盾值。
+                当前 <code>ActorData</code> 只有 Defense，且 <code>TakeDamage</code> 直接扣 HP，需要增加 <code>CurrentShield</code>、<code>GainShield</code>、<code>ResetShield</code>，伤害必须先消耗 Shield。
             </div>
 
             <h3>数据边界</h3>
             <ul>
                 <li>HP 范围为 <code>0..MaxHp</code>。</li>
-                <li>ATK、DEF、费用、格挡不得小于 0，除非未来明确设计负属性。</li>
+                <li>ATK、DEF、费用、Shield 不得小于 0，除非未来明确设计负属性。</li>
                 <li>金币不得小于 0；购买必须先验证余额，再一次性扣款。</li>
                 <li>卡牌 ID、遗物 ID、节点 ID 在各自域内唯一。</li>
                 <li>一局结束后新建 <code>RunData</code>，不能在旧对象上逐字段复位。</li>
             </ul>
+
+            <div class="callout success">
+                <strong>Inspector 调试约定：</strong>运行时 <code>*Data</code> 使用 public camelCase 字段，不通过只读自动属性隐藏。
+                本项目依赖开发者约定不随意从外部修改；只有 Unity 组件引用继续使用 <code>[SerializeField] private</code>。
+            </div>
         </section>
 
         <section id="effects">
-            <h2>07. 百分比卡牌与效果解析</h2>
-            <h3>统一公式</h3>
-            <pre><code>DomainValue = Source.GetDomainValue(effect.Domain)
-FigureDelta = StatusResolver.GetFigureDelta(effect.Type, Source)
-FinalFigure = Max(0, effect.Figure + FigureDelta)
-RawValue = DomainValue * FinalFigure / 100f
-FinalValue = Mathf.RoundToInt(RawValue)</code></pre>
-            <p>所有结果统一使用整数。伤害、护盾和治疗都走同一公式，差异只存在于结果应用方式。</p>
+            <h2>07. CardSO 到结算事件的效果管线</h2>
 
+            <div class="callout success">
+                <strong>核心约定：</strong>效果的完整描述只存在于 <code>CardSO.effects</code>。
+                卡牌使用后，<code>EffectType</code> 变成具体事件类型，<code>EffectTarget</code> 变成具体 ActorData 引用；
+                进入 EventQueue 的事件只保留 <code>domain、figure、source、target</code>。
+            </div>
+
+            <h3>三个阶段的数据形态</h3>
             <table>
-                <thead><tr><th>字段</th><th>职责</th><th>示例</th></tr></thead>
+                <thead><tr><th>阶段</th><th>持有内容</th><th>为什么</th></tr></thead>
                 <tbody>
-                <tr><td><code>EffectType</code></td><td>决定结果如何应用</td><td>Damage、Shield、Heal</td></tr>
-                <tr><td><code>EffectDomain</code></td><td>决定读取 Source 的哪项基础属性</td><td>Atk、Def、Hp</td></tr>
-                <tr><td><code>Figure</code></td><td>百分比整数</td><td>120 表示 120%</td></tr>
-                <tr><td><code>EffectTarget</code></td><td>决定应用对象</td><td>Player、SingleEnemy、AllEnemies</td></tr>
+                <tr><td>配置阶段</td><td><code>CardSO</code> 内的 <code>EffectInfo(type, domain, figure, target)</code></td><td>供 Inspector 配卡，保留完整抽象描述</td></tr>
+                <tr><td>出牌转换阶段</td><td>读取 EffectInfo，解析当前 Source 和实际 Target</td><td>把“效果种类”和“目标规则”消费掉</td></tr>
+                <tr><td>事件结算阶段</td><td><code>TakeDamageEvent(domain, figure, source, target)</code> 等</td><td>事件类型已经表达行为，实际 target 已表达目标，不再重复携带 EffectType/EffectTarget</td></tr>
                 </tbody>
             </table>
 
-            <h3>状态对 Figure 的影响</h3>
+            <h3>CardData 不复制效果详情</h3>
+            <p><code>CardData</code> 只保存本局动态信息，并保留原始 <code>CardSO</code> 引用：</p>
+            <pre><code>CardData
+├─ cardSO          原始卡牌配置引用
+├─ instanceId      本局卡牌实例 ID
+├─ cost            当前费用
+├─ upgradeLevel    当前升级状态
+└─ runtimeTags     本局临时标签</code></pre>
+            <p>不要再把 <code>CardSO.effects</code> duplicate 为 <code>EffectData</code>。出牌时直接读取 CardSO 的 EffectInfo，并立即转换成结算事件。</p>
+
+            <h3>具体结算事件</h3>
+            <p>结算事件是 EventQueue 中可被修改的事务对象，不是“已经发生”的结果通知。字段使用 public，方便 Buff、遗物和 Inspector 调试。</p>
+            <div class="callout warning">
+                结算事件统一定义为 <code>sealed class</code>，不能使用 struct、readonly 字段或只读属性。
+                EventQueue 中的所有监听者必须拿到并修改同一个事件实例，Actor 才能接收完整修饰后的 domain 和 figure。
+            </div>
+            <pre><code>TakeDamageEvent : IEvent
+├─ domain : EffectDomain
+├─ figure : int
+├─ source : ActorData
+└─ target : ActorData
+
+GainShieldEvent : IEvent
+├─ domain : EffectDomain
+├─ figure : int
+├─ source : ActorData
+└─ target : ActorData
+
+HealEvent : IEvent
+├─ domain : EffectDomain
+├─ figure : int
+├─ source : ActorData
+└─ target : ActorData</code></pre>
+
+            <table>
+                <thead><tr><th>CardSO EffectType</th><th>发布的事件</th><th>最终接收行为</th></tr></thead>
+                <tbody>
+                <tr><td>Damage</td><td><code>TakeDamageEvent</code></td><td>目标 Actor 计算数值，先扣 Shield 再扣 HP</td></tr>
+                <tr><td>Shield</td><td><code>GainShieldEvent</code></td><td>目标 Actor 增加 CurrentShield</td></tr>
+                <tr><td>Heal</td><td><code>HealEvent</code></td><td>目标 Actor 回复 HP，不超过 MaxHp</td></tr>
+                </tbody>
+            </table>
+
+            <h3>目标解析后不再保留 EffectTarget</h3>
             <ul>
-                <li>力量层数只影响 Damage 类型，每层修改 10 个百分点。</li>
-                <li>抗性层数只影响 Shield 类型，每层修改 10 个百分点。</li>
-                <li>上升使用正层数，下降使用负层数；最终 Figure 最低为 0。</li>
-                <li>Heal 默认不受力量或抗性影响，除非未来新增专门状态。</li>
+                <li><code>Player</code>：解析为当前玩家 ActorData，发布 1 个事件。</li>
+                <li><code>SingleEnemy</code>：解析为玩家当前选中的存活敌人，发布 1 个事件。</li>
+                <li><code>AllEnemy</code>：遍历当前存活敌人，为每个敌人分别发布 1 个事件。</li>
+            </ul>
+            <p>全体伤害不发布一个携带 List 的大事件。每个事件只有一个 target，这样 Buff、遗物、Shield、死亡和结果反馈都能按单个目标独立结算。</p>
+
+            <h3>出牌时的转换顺序</h3>
+            <ol>
+                <li>验证当前是玩家回合、卡在 Hand、能量足够且目标合法。</li>
+                <li>扣除能量并把卡从 Hand 移到 PlayedThisTurn，避免重复点击。</li>
+                <li>按 CardSO.effects 的顺序读取每个 EffectInfo。</li>
+                <li>根据 EffectType 创建具体事件类型。</li>
+                <li>根据 EffectTarget 展开为一个或多个实际 target。</li>
+                <li>逐个调用并等待 <code>EventQueueManager.PublishAsync(event)</code>。</li>
+                <li>一个效果的事件完全结算后，才处理 CardSO 中的下一个效果。</li>
+                <li>整张卡结算结束后发布 <code>CardPlayedEvent</code>，再检查胜负。</li>
+            </ol>
+
+            <div class="callout danger">
+                不使用 <code>Publish(event).Forget()</code> 连续发出多个卡牌效果。必须 await <code>PublishAsync</code>，否则多段伤害、击杀、遗物触发和下一效果之间的顺序不可控。
+            </div>
+
+            <h3>EventQueue 修饰管线</h3>
+            <div class="flow">
+                <div class="node"><strong>TakeDamageEvent</strong>初始 domain / figure</div>
+                <div class="arrow">→</div>
+                <div class="node"><strong>Source Buff</strong>力量等来源修正</div>
+                <div class="arrow">→</div>
+                <div class="node"><strong>Relic</strong>遗物修正</div>
+                <div class="arrow">→</div>
+                <div class="node"><strong>Target Buff</strong>目标状态修正</div>
+                <div class="arrow">→</div>
+                <div class="node"><strong>Actor</strong>目标匹配并应用</div>
+            </div>
+
+            <table>
+                <thead><tr><th>建议 priority</th><th>处理者</th><th>职责</th></tr></thead>
+                <tbody>
+                <tr><td>100</td><td>伤害来源 Buff</td><td>例如力量每层令 TakeDamageEvent.figure 增加 10</td></tr>
+                <tr><td>200</td><td>来源拥有的遗物</td><td>根据事件类型、source、target 修改 domain 或 figure</td></tr>
+                <tr><td>300</td><td>目标 Buff / Debuff</td><td>根据 target 身上的状态修正事件</td></tr>
+                <tr><td>400</td><td>目标拥有的防御遗物</td><td>最后修改接收前的参数</td></tr>
+                <tr><td>900</td><td>所有 Actor</td><td>只有 event.target 与自身 Data 相同的 Actor 执行最终接收</td></tr>
+                </tbody>
+            </table>
+            <p>EventQueue 当前按 priority 从小到大依次 await，因此 Actor 接收优先级必须晚于所有修饰器。同优先级不要依赖注册先后决定规则。</p>
+
+            <h3>Buff 与遗物如何修改事件</h3>
+            <ul>
+                <li>力量只监听 <code>TakeDamageEvent</code>，且只在事件 source 是 Buff 所有者时修改 figure。</li>
+                <li>抗性只监听 <code>GainShieldEvent</code>，且只在事件 source 是 Buff 所有者时修改 figure。</li>
+                <li>防御类状态检查事件 target 是否为自己，再修改 figure。</li>
+                <li>修改同一个 event 实例，不创建替代事件，不直接调用 target.TakeDamage。</li>
+                <li>figure 最终最低为 0。默认不允许 Buff 把 domain 改成未定义值。</li>
             </ul>
 
-            <h3>效果执行边界</h3>
-            <p>推荐增加 <code>EffectContext</code> 和 <code>EffectResolver</code>。Context 显式携带 Source、选中目标、所有敌人和 BattleContext，避免参考工程中在 Effect 内使用 <code>FindAnyObjectByType</code>。</p>
-            <pre><code>EffectContext
-├─ Source: ActorData
-├─ SelectedTarget: ActorData
-├─ EnemyTargets: IReadOnlyList&lt;EnemyData&gt;
-├─ Card: CardData
-└─ Battle: BattleContext</code></pre>
-            <div class="callout danger">
-                当前 <code>EffectInfo</code> 有 <code>target</code>，但 <code>EffectData</code> 构造时没有复制 Target。继续开发前必须补齐，否则单体敌人、全体敌人和玩家目标会在运行时丢失。
+            <div class="callout warning">
+                当前 EventQueue 使用 <code>evt.GetType()</code> 精确分发，不会把 TakeDamageEvent 自动发送给某个公共接口监听器。
+                课程版中，RelicManager 分别注册 TakeDamageEvent、GainShieldEvent、HealEvent 即可，不必先改造成多态事件总线。
             </div>
-            <p>同一张卡的效果按列表顺序执行。整张卡结算结束后再检查奖励流程，但每个伤害效果后都应更新死亡状态，死亡敌人不能继续作为后续单体目标。</p>
+
+            <h3>Actor 是最终数值计算与接收者</h3>
+            <p>所有 Actor 都可以监听结算事件，但只有 target 是自身 Data 时才执行。以伤害为例：</p>
+            <pre><code>收到 TakeDamageEvent
+if (event.target != Data) return
+
+domainValue = event.source.GetDomainValue(event.domain)
+finalFigure = Max(0, event.figure)
+damage = Mathf.RoundToInt(domainValue * finalFigure / 100f)
+
+Data.TakeDamage(damage)  // 内部先消耗 Shield，再减少 HP
+RefreshView()
+Publish ActorDamagedEvent</code></pre>
+            <p>这样 Card 不知道最终伤害，Buff 和遗物不负责扣血，Actor 对自己的 HP 和 Shield 拥有最终解释权。</p>
+
+            <h3>结果事件与结算事件分开</h3>
+            <table>
+                <thead><tr><th>事件类别</th><th>示例</th><th>是否可修改</th><th>用途</th></tr></thead>
+                <tbody>
+                <tr><td>结算事件</td><td><code>TakeDamageEvent</code></td><td>是</td><td>进入 Buff、遗物、Actor 接收管线</td></tr>
+                <tr><td>结果事件</td><td><code>ActorDamagedEvent</code></td><td>否</td><td>记录最终伤害、Shield 吸收量、剩余 HP，供 UI、音效和胜负检查</td></tr>
+                </tbody>
+            </table>
+            <p><code>ActorDamagedEvent</code> 应携带 target、rawValue、shieldAbsorbed、hpDamage 和 remainingHp。UI 只监听结果事件，不参与修改 TakeDamageEvent。</p>
         </section>
 
         <section id="battle">
@@ -536,7 +653,7 @@ FinalValue = Mathf.RoundToInt(RawValue)</code></pre>
             <h3>玩家回合顺序</h3>
             <ol>
                 <li>能量恢复至 3。</li>
-                <li>玩家格挡清零。</li>
+                <li>玩家 Shield 清零。</li>
                 <li>结算中毒并减少层数，若死亡立即结束战斗。</li>
                 <li>触发回合开始遗物和状态。</li>
                 <li>抽牌至手牌数量为 5，手牌上限 10。</li>
@@ -657,8 +774,12 @@ FinalValue = Mathf.RoundToInt(RawValue)</code></pre>
                     <p>UI 发送“我要做什么”，例如 <code>PlayCardCommand</code>。Manager 可以因状态或资源不足而拒绝。</p>
                 </div>
                 <div class="card">
-                    <h3>Event 是事实</h3>
-                    <p>Manager 发布“已经发生什么”，例如 <code>CardPlayedEvent</code>。监听者不能撤销事实。</p>
+                    <h3>结算 Event 是可修改事务</h3>
+                    <p><code>TakeDamageEvent</code> 在 Actor 接收前允许 Buff 和遗物修改，其名称表达即将执行的动作。</p>
+                </div>
+                <div class="card">
+                    <h3>结果 Event 是事实</h3>
+                    <p><code>ActorDamagedEvent</code>、<code>CardPlayedEvent</code> 表示已经发生的结果，发布后不再修改。</p>
                 </div>
             </div>
 
@@ -668,7 +789,7 @@ FinalValue = Mathf.RoundToInt(RawValue)</code></pre>
                 <tr><td>一局</td><td><code>StartRunCommand</code>、<code>AbandonRunCommand</code></td><td><code>RunStartedEvent</code>、<code>RunEndedEvent</code></td></tr>
                 <tr><td>地图</td><td><code>SelectRoomCommand</code></td><td><code>RoomEnteredEvent</code>、<code>MapUpdatedEvent</code></td></tr>
                 <tr><td>战斗</td><td><code>StartBattleCommand</code>、<code>EndPlayerTurnCommand</code></td><td><code>BattleStartedEvent</code>、<code>BattleTurnChangedEvent</code>、<code>BattleEndedEvent</code></td></tr>
-                <tr><td>卡牌</td><td><code>PlayCardCommand</code>、<code>SelectRewardCardCommand</code></td><td><code>CardPlayedEvent</code>、<code>CardAddedEvent</code></td></tr>
+                <tr><td>卡牌</td><td><code>PlayCardCommand</code>、<code>SelectRewardCardCommand</code></td><td><code>TakeDamageEvent</code>、<code>GainShieldEvent</code>、<code>HealEvent</code>、<code>CardPlayedEvent</code></td></tr>
                 <tr><td>整备</td><td><code>RestCommand</code>、<code>UpgradeCardCommand</code>、<code>RemoveCardCommand</code></td><td><code>PlayerRestedEvent</code>、<code>CardUpgradedEvent</code>、<code>CardRemovedEvent</code></td></tr>
                 </tbody>
             </table>
@@ -677,9 +798,11 @@ FinalValue = Mathf.RoundToInt(RawValue)</code></pre>
             <ul>
                 <li><code>OnEnable</code> 中 AddListener，必须在 <code>OnDisable</code> 中使用同一个方法引用 RemoveListener。</li>
                 <li>禁止使用无法注销的匿名 lambda 订阅长期事件。</li>
-                <li>Command/Event 的 payload 只放必要数据，不传场景 GameObject 作为长期状态。</li>
+                <li>结算 Event 只放 domain、figure、source、target；不携带 CardSO、EffectType 或 EffectTarget。</li>
+                <li>source 和 target 使用当前战斗的 ActorData 引用，不传场景 GameObject 作为长期状态。</li>
                 <li>同一命令只有一个领域 Manager 负责修改核心状态，其余模块监听结果 Event。</li>
-                <li>EventQueue 的 priority 只用于明确生命周期顺序，不用来掩盖循环依赖。</li>
+                <li>EventQueue 的 priority 明确表示修饰顺序；Actor 的最终接收优先级固定晚于 Buff 和遗物。</li>
+                <li>结算 Event 可在 PublishAsync 期间修改；对应结果 Event 发布后视为不可修改。</li>
             </ul>
 
             <h3>异步规则</h3>
@@ -726,7 +849,7 @@ FinalValue = Mathf.RoundToInt(RawValue)</code></pre>
                 <li>Panel 的公开入口统一为 <code>Render(Data)</code>、<code>Show()</code>、<code>Hide()</code>。</li>
                 <li>按钮点击只发送 Command，不直接调用 Data 的 Set/Take 方法。</li>
                 <li>目标选择期间明确高亮可选敌人；全体和玩家目标不进入单体选择模式。</li>
-                <li>敌人意图显示使用 EffectResolver 的预览值，不能单独写一套 UI 公式。</li>
+                <li>敌人意图显示使用结算事件的副本走同一套修饰规则进行预览，不能在 UI 单独写一套公式。</li>
             </ul>
         </section>
 
@@ -736,11 +859,11 @@ FinalValue = Mathf.RoundToInt(RawValue)</code></pre>
                 <thead><tr><th>位置</th><th>当前情况</th><th>规范要求</th><th>优先级</th></tr></thead>
                 <tbody>
                 <tr><td><code>RunManager</code></td><td><code>OnDisable</code> 为空，监听不会注销</td><td>成对 RemoveListener；字段 <code>PlayerSO</code> 改为 <code>playerSO</code> 或删除</td><td>P0</td></tr>
-                <tr><td><code>EffectData</code></td><td>构造时遗漏 <code>EffectTarget</code></td><td>运行时数据必须完整复制 target</td><td>P0</td></tr>
-                <tr><td><code>ActorData</code></td><td>Defense 与格挡概念未分离，伤害直扣 HP</td><td>增加 CurrentBlock，伤害先扣格挡</td><td>P0</td></tr>
+                <tr><td><code>EffectData</code></td><td>当前从 CardSO 复制部分效果详情，并遗漏 target</td><td>取消 CardData 内的效果副本；出牌时从 CardSO 直接转换为具体结算 Event</td><td>P0</td></tr>
+                <tr><td><code>ActorData</code></td><td>Defense 与 Shield 概念未分离，伤害直扣 HP</td><td>增加 CurrentShield，伤害先扣 Shield</td><td>P0</td></tr>
                 <tr><td><code>BattleManager</code></td><td>只持有单个 Enemy，缺少胜负状态</td><td>改为敌人列表，加入 Preparing、Victory、Defeat</td><td>P0</td></tr>
                 <tr><td><code>BattleManager</code></td><td>状态 Enter/Exit 为空</td><td>将回合开始/结束规则放入对应状态阶段</td><td>P0</td></tr>
-                <tr><td><code>CardData</code></td><td>尚无标签、升级和牌堆位置</td><td>支持 Innate、Exhaust、升级数据；位置由 CardDeck 管</td><td>P1</td></tr>
+                <tr><td><code>CardData</code></td><td>当前复制 EffectData 列表，动态数据与配置重复</td><td>保留 CardSO 引用、费用、升级、实例 ID 和标签；牌堆位置由 CardDeck 管</td><td>P0</td></tr>
                 <tr><td><code>ComposeManager</code></td><td><code>Dul</code>、<code>MonoDul</code> 为空且命名不表意</td><td>不要继续扩展；无公共能力时直接继承 MonoBehaviour</td><td>P1</td></tr>
                 <tr><td><code>MonoSingleton</code></td><td>没有重复实例保护和销毁清理</td><td>增加重复保护和 OnDestroy 清理</td><td>P1</td></tr>
                 <tr><td><code>CardRarity</code></td><td><code>Basis</code>、<code>Legend</code> 不统一</td><td>资产量少时尽早改为 Starter、Legendary</td><td>P1</td></tr>
@@ -757,7 +880,8 @@ FinalValue = Mathf.RoundToInt(RawValue)</code></pre>
             <table>
                 <thead><tr><th>阶段</th><th>内容</th><th>完成标准</th></tr></thead>
                 <tbody>
-                <tr><td>P0 数据契约</td><td>Actor、Card、Effect、Target、Block、Energy、状态层数</td><td>百分比公式可用纯数据测试验证</td></tr>
+                <tr><td>P0 数据契约</td><td>CardSO 效果配置、CardData 动态字段、Actor、Shield、Energy</td><td>CardData 不复制 EffectInfo，运行时字段可在 Inspector 查看</td></tr>
+                <tr><td>P0 效果管线</td><td>CardEffectEmitter、TakeDamageEvent、GainShieldEvent、HealEvent、优先级修饰、Actor 接收</td><td>事件经过 Buff/遗物后，仅匹配的 target Actor 应用最终结果</td></tr>
                 <tr><td>P0 单场战斗</td><td>四牌堆、回合状态机、意图、单敌人胜负</td><td>可连续打完一场且无卡死</td></tr>
                 <tr><td>P1 多敌人</td><td>目标选择、全体效果、左到右行动</td><td>两名敌人的死亡与行动顺序正确</td></tr>
                 <tr><td>P1 一局数据</td><td>初始牌组、初始遗物、99 金币、奖励、HP 继承</td><td>连续完成多个节点，状态不丢失</td></tr>
@@ -786,17 +910,22 @@ FinalValue = Mathf.RoundToInt(RawValue)</code></pre>
             <h3>消息与生命周期</h3>
             <ul class="checklist">
                 <li>OnEnable 的所有监听都在 OnDisable 注销。</li>
-                <li>Command 可以被合法拒绝，Event 使用过去式表示事实。</li>
+                <li>Command 可以被合法拒绝；结算 Event 可修改，结果 Event 使用过去式且不可修改。</li>
+                <li>CardSO 的 EffectInfo 已转换为具体事件，事件内不再残留 EffectType 或 EffectTarget。</li>
+                <li>Buff、遗物、Actor 的 priority 顺序固定，Actor 始终最后接收。</li>
+                <li>多个卡牌效果逐个 await PublishAsync，没有使用 Forget 并发结算。</li>
                 <li>战斗结束后所有输入和异步行动停止。</li>
                 <li>一局结束后创建全新的 RunData。</li>
             </ul>
 
             <h3>玩法不变量</h3>
             <ul class="checklist">
-                <li>HP、格挡、能量和金币不会出现非法负数。</li>
-                <li>DEF 是基础属性，Block 是临时护盾。</li>
+                <li>HP、Shield、能量和金币不会出现非法负数。</li>
+                <li>DEF 是基础属性，Shield 是战斗中的临时护盾值。</li>
                 <li>卡牌总数在各牌堆之间守恒，单张实例不会同时存在于两个牌堆。</li>
                 <li>本回合使用过的牌不会在同回合立刻洗回。</li>
+                <li>每个结算事件只有一个 source 和一个 target；全体效果拆成多个事件。</li>
+                <li>Actor 只有在 event.target 与自身 Data 相同时才应用效果。</li>
                 <li>敌人意图显示值与最终结算使用同一公式。</li>
                 <li>全部敌人死亡才胜利，玩家死亡立即战败。</li>
                 <li>每层地图最低保障满足，Boss 位于最后一步。</li>

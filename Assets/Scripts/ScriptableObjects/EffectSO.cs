@@ -27,8 +27,8 @@ namespace ScriptableObjects
     public struct EffectInfo
     {
         public EffectType type;
-        public int figure;
         public EffectDomain domain;
+        public int magnification;
         public EffectTarget target;
     }
 }
