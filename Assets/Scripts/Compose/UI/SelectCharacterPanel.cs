@@ -3,6 +3,7 @@ using Messages;
 using Messages.Commands.Compose;
 using ScriptableObjects.Actors;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Compose.UI
@@ -34,11 +35,11 @@ namespace Compose.UI
 
         private void OnGo()
         {
-            
             CommandQueueManager.Instance.Send(new RunStartCommand()
             {
                 player = lainaSO
             });
+            UIManager.Instance.Hide<SelectCharacterPanel>();
         }
 
         private void OnBack()

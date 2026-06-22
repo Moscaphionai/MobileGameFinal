@@ -1,8 +1,6 @@
-﻿using System;
-using Compose.Actors;
+﻿using Compose.Actors;
 using Messages;
 using Messages.Commands.Compose;
-using ScriptableObjects;
 using ScriptableObjects.Actors;
 using Utilities;
 
@@ -12,6 +10,13 @@ namespace Compose
     {
         private PlayerSO PlayerSO;
         public PlayerData playerData;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            DontDestroyOnLoad(gameObject);
+        }
+
         private void OnEnable()
         {
             CommandQueueManager.Instance.AddListener<RunStartCommand>(RunStart);    
