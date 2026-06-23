@@ -3,7 +3,6 @@ using Messages;
 using Messages.Commands.Compose;
 using ScriptableObjects.Actors;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Compose.UI
@@ -39,9 +38,7 @@ namespace Compose.UI
             {
                 player = lainaSO
             });
-            UIManager.Instance.Hide<SelectCharacterPanel>();
-            UIManager.Instance.Show<MapPanel>();
-            UIManager.Instance.Show<StatePanel>();
+            ComposeManager.Instance.LoadSceneWithTransition("RunScene");
         }
 
         private void OnBack()

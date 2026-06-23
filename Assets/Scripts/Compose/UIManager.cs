@@ -8,10 +8,12 @@ namespace Compose
     public sealed class UIManager : MonoSingleton<UIManager>
     {
         private readonly Dictionary<Type, BasePanel> panels = new();
+        private TransitionPanel transitionPanel;
 
         protected override void Awake()
         {
             base.Awake();
+            transitionPanel = GetComponentInChildren<TransitionPanel>(true);
 
             foreach (var panel in GetComponentsInChildren<BasePanel>(true))
             {
@@ -48,6 +50,16 @@ namespace Compose
         {
             foreach (var panel in panels.Values)
                 panel.Hide(immediately);
+        }
+
+        public void FadeOutTransition(Action onComplete)
+        {
+            transitionPanel.FadeOut(onComplete);
+        }
+
+        public void FadeInTransition()
+        {
+            transitionPanel.FadeIn();
         }
     }
 }

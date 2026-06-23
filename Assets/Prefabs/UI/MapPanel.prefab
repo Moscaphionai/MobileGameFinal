@@ -179,7 +179,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54a74ab1ea9b44c5a20f7892a4a3c7f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showOnStart: 0
+  showOnStart: 1
   fadeDuration: 0.2
   selections: {fileID: 1456562708235401147}
   nodeView: {fileID: 4977066585059884240, guid: d15bc55849f2e59499ffd76fe2dfbad9, type: 3}
