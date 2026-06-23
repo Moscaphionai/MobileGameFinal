@@ -1,11 +1,24 @@
+using System;
 using System.Collections.Generic;
-using Compose.Map;
+using Messages;
+using Messages.Commands.Map;
+using ScriptableObjects.Actors;
 using ScriptableObjects.Map;
 using UnityEngine;
 using Utilities;
 
 namespace Compose
 {
+    public class MapNodeData
+    {
+        public int depth;
+        public int index;
+        public NodeType type;
+        public NodeSO nodeSO;
+        public EnemySO enemy;
+        public List<MapNodeData> children = new();
+    }
+    
     public sealed class MapManager : MonoSingleton<MapManager>
     {
         private const int ChildCount = 3;
@@ -16,7 +29,9 @@ namespace Compose
         [SerializeField] private BreakNodeSO breakNode;
         [SerializeField] private BossNodeSO bossNode;
 
-        public MapNodeData root;
+        private MapNodeData root;
+        private MapNodeData curNode;
+        public List<MapNodeData> CurNodes => curNode.children;
 
         protected override void Awake()
         {
@@ -24,11 +39,27 @@ namespace Compose
             GenerateMap();
         }
 
+        private void OnEnable()
+        {
+            CommandQueueManager.Instance.AddListener<ConfirmNodeCommand>(ConfirmNode);
+        }
+
+        private void OnDisable()
+        {
+            CommandQueueManager.Instance.RemoveListener<ConfirmNodeCommand>(ConfirmNode);
+        }
+
         public void GenerateMap()
         {
             var rewardDepth = layerCount / 2;
 
             root = CreateNodeTree(0, 0, rewardDepth);
+            curNode = root;
+        }
+
+        private void ConfirmNode(ConfirmNodeCommand command)
+        {
+            curNode = command.node;
         }
 
         private MapNodeData CreateNodeTree(int depth, int index, int rewardDepth)

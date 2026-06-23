@@ -13,7 +13,6 @@ namespace ScriptableObjects.Map
 
     public abstract class NodeSO : ScriptableObject
     {
-        public string nodeName;
         public Sprite icon;
 
         public abstract NodeType GetNodeType();

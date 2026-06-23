@@ -40,6 +40,7 @@ namespace Compose.UI
                 player = lainaSO
             });
             UIManager.Instance.Hide<SelectCharacterPanel>();
+            UIManager.Instance.Show<MapPanel>();
         }
 
         private void OnBack()

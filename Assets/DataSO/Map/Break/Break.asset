@@ -9,9 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 41a09c824e098864a8fecb4af3842b6e, type: 3}
-  m_Name: Slime
+  m_Script: {fileID: 11500000, guid: b0f03daae3b1ec94691706e8db9c3b14, type: 3}
+  m_Name: Break
   m_EditorClassIdentifier: 
-  icon: {fileID: -970365867, guid: fea2563ef60881247bc9bd03e20503bb, type: 3}
-  enemies:
-  - {fileID: 11400000, guid: 8421dab936d7cc643aecf4c17c76e476, type: 2}
+  icon: {fileID: 396600155, guid: fea2563ef60881247bc9bd03e20503bb, type: 3}

@@ -10,13 +10,7 @@ namespace Compose
     {
         private PlayerSO PlayerSO;
         public PlayerData playerData;
-
-        protected override void Awake()
-        {
-            base.Awake();
-            DontDestroyOnLoad(gameObject);
-        }
-
+        
         private void OnEnable()
         {
             CommandQueueManager.Instance.AddListener<RunStartCommand>(RunStart);    
@@ -29,7 +23,8 @@ namespace Compose
         
         private void RunStart(RunStartCommand command)
         {
-            
+            PlayerSO = command.player;
+            playerData = new PlayerData(PlayerSO);
         }
         
     }

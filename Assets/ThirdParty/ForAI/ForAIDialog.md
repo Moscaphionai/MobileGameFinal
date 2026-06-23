@@ -1,0 +1,12 @@
+﻿MapManager管理数据，执行操作。
+
+MapPanel是UI，只负责表现部分。
+持有MapManager里的CurNodes属性的。
+在Refresh时，重新设置每个selections下的Child，的NodeType。
+同时只能有一个NodeView被选择，存在被选择的NodeView则可以点击Confirm
+
+NodeView也只负责表现部分，
+根据NodeType，调整自己的表现形式，不持有具体的数据。
+是Toggle
+
+最后删掉多余的对于Map系统多余的部分
