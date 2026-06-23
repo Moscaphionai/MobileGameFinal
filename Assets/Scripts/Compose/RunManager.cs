@@ -25,6 +25,7 @@ namespace Compose
         {
             PlayerSO = command.player;
             playerData = new PlayerData(PlayerSO);
+            MapManager.Instance.GenerateMap();
         }
         
     }

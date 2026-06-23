@@ -41,6 +41,7 @@ namespace Compose.UI
             });
             UIManager.Instance.Hide<SelectCharacterPanel>();
             UIManager.Instance.Show<MapPanel>();
+            UIManager.Instance.Show<StatePanel>();
         }
 
         private void OnBack()

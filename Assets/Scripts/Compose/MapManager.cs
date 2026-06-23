@@ -32,13 +32,7 @@ namespace Compose
         private MapNodeData root;
         private MapNodeData curNode;
         public List<MapNodeData> CurNodes => curNode.children;
-
-        protected override void Awake()
-        {
-            base.Awake();
-            GenerateMap();
-        }
-
+        
         private void OnEnable()
         {
             CommandQueueManager.Instance.AddListener<ConfirmNodeCommand>(ConfirmNode);
