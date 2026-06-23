@@ -1,48 +1,22 @@
-using System;
 using System.Collections.Generic;
+using Compose.Map;
+using ScriptableObjects.Map;
 using UnityEngine;
 using Utilities;
 
 namespace Compose
 {
-    public enum NodeType
-    {
-        Battle,
-        Elite,
-        Incident,
-        Shop,
-        Reward,
-        Break,
-        Boss
-    }
-
-    [Serializable]
-    public class NodeConfig
-    {
-        public string name;
-        public NodeType type;
-        public Sprite icon;
-    }
-
-    [Serializable]
-    public class MapLayer
-    {
-        public int index;
-        public List<NodeConfig> nodes = new();
-    }
-
     public sealed class MapManager : MonoSingleton<MapManager>
     {
-        [SerializeField] private int layerCount = 4;
-        [SerializeField] private int nodesPerLayer = 3;
-        [SerializeField] private List<NodeConfig> nodePool = new();
-        [SerializeField] private NodeConfig eliteNode;
-        [SerializeField] private NodeConfig shopNode;
-        [SerializeField] private NodeConfig rewardNode;
-        [SerializeField] private NodeConfig breakNode;
-        [SerializeField] private NodeConfig bossNode;
+        private const int ChildCount = 3;
 
-        public List<MapLayer> layers = new();
+        [SerializeField] private int layerCount = 6;
+        [SerializeField] private List<NodeSO> nodePool = new();
+        [SerializeField] private RewardNodeSO rewardNode;
+        [SerializeField] private BreakNodeSO breakNode;
+        [SerializeField] private BossNodeSO bossNode;
+
+        public MapNodeData root;
 
         protected override void Awake()
         {
@@ -52,86 +26,53 @@ namespace Compose
 
         public void GenerateMap()
         {
-            layers.Clear();
+            var rewardDepth = layerCount / 2;
 
-            var nodeCount = layerCount * nodesPerLayer;
-            var configs = GenerateNodeConfigs(nodeCount);
-            var configIndex = 0;
-
-            for (var layerIndex = 0; layerIndex < layerCount; layerIndex++)
-            {
-                var layer = new MapLayer
-                {
-                    index = layerIndex
-                };
-
-                for (var nodeIndex = 0; nodeIndex < nodesPerLayer; nodeIndex++)
-                {
-                    layer.nodes.Add(configs[configIndex]);
-                    configIndex++;
-                }
-
-                layers.Add(layer);
-            }
-
-            layers.Add(new MapLayer
-            {
-                index = layerCount,
-                nodes = new List<NodeConfig>
-                {
-                    CopyNode(breakNode)
-                }
-            });
-
-            layers.Add(new MapLayer
-            {
-                index = layerCount + 1,
-                nodes = new List<NodeConfig>
-                {
-                    CopyNode(bossNode)
-                }
-            });
+            root = CreateNodeTree(0, 0, rewardDepth);
         }
 
-        private List<NodeConfig> GenerateNodeConfigs(int count)
+        private MapNodeData CreateNodeTree(int depth, int index, int rewardDepth)
         {
-            var configs = new List<NodeConfig>
+            var node = CreateNode(GetNodeSO(depth, rewardDepth), depth, index);
+
+            if (depth == layerCount - 1)
+                return node;
+
+            for (var childIndex = 0; childIndex < ChildCount; childIndex++)
+                node.children.Add(CreateNodeTree(depth + 1, index * ChildCount + childIndex, rewardDepth));
+
+            return node;
+        }
+
+        private NodeSO GetNodeSO(int depth, int rewardDepth)
+        {
+            if (depth == layerCount - 1)
+                return bossNode;
+
+            if (depth == layerCount - 2)
+                return breakNode;
+
+            if (depth == rewardDepth)
+                return rewardNode;
+
+            return nodePool[UnityEngine.Random.Range(0, nodePool.Count)];
+        }
+
+        private MapNodeData CreateNode(NodeSO nodeSO, int depth, int index)
+        {
+            var node = new MapNodeData
             {
-                CopyNode(eliteNode),
-                CopyNode(shopNode)
+                depth = depth,
+                index = index,
+                type = nodeSO.GetNodeType(),
+                nodeSO = nodeSO
             };
 
-            while (configs.Count < count - 1)
-            {
-                var config = nodePool[UnityEngine.Random.Range(0, nodePool.Count)];
-                configs.Add(CopyNode(config));
-            }
+            if (nodeSO is BattleNodeSO battleNode)
+                node.enemy = battleNode.enemies[UnityEngine.Random.Range(0, battleNode.enemies.Count)];
 
-            Shuffle(configs);
-
-            var rewardIndex = UnityEngine.Random.Range(count / 2, count);
-            configs.Insert(rewardIndex, CopyNode(rewardNode));
-
-            return configs;
+            return node;
         }
 
-        private void Shuffle(List<NodeConfig> configs)
-        {
-            for (var i = configs.Count - 1; i > 0; i--)
-            {
-                var index = UnityEngine.Random.Range(0, i + 1);
-                (configs[i], configs[index]) = (configs[index], configs[i]);
-            }
-        }
-
-        private NodeConfig CopyNode(NodeConfig config)
-        {
-            return new NodeConfig
-            {
-                name = config.name,
-                type = config.type,
-                icon = config.icon
-            };
-        }
     }
 }

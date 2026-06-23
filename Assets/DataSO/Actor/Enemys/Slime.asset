@@ -10,8 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: beab22605b714e6e8d97a6e62f1ded4b, type: 3}
-  m_Name: enem
+  m_Name: Slime
   m_EditorClassIdentifier: 
+  idle: {fileID: 21300000, guid: 19bf10ec081630d4e9cf6187f61dbab5, type: 3}
   info:
     name: enem
     atk: 60

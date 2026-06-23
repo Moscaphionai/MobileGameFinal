@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b28c3ffa5def453ab2bb5615eb1821d7, type: 3}
   m_Name: Laina
   m_EditorClassIdentifier: 
+  idle: {fileID: -1213428897, guid: ba216b902e6c78c41aa9d66c2154e1ff, type: 3}
   info:
     name: Laina
     atk: 60

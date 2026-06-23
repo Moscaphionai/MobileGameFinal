@@ -1,17 +1,22 @@
 using System;
+using ScriptableObjects.Map;
 using UnityEngine;
 
 namespace Compose.Map
 {
     public abstract class NodeBaseModel
     {
+        public MapNodeData data;
+        public NodeSO nodeSO;
         public string name;
         public Sprite icon;
 
-        protected NodeBaseModel(string name, Sprite icon)
+        protected NodeBaseModel(MapNodeData data)
         {
-            this.name = name;
-            this.icon = icon;
+            this.data = data;
+            nodeSO = data.nodeSO;
+            name = nodeSO.nodeName;
+            icon = nodeSO.icon;
         }
     }
 

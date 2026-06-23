@@ -1,24 +1,25 @@
 using Compose.Actors;
-using ScriptableObjects.Actors;
-using UnityEngine;
+using ScriptableObjects.Map;
 
 namespace Compose.Map
 {
-    public sealed class BattleNodeModel : NodeBaseModel
+    public class BattleNodeModel : NodeBaseModel
     {
+        public BattleNodeSO battleNodeSO;
         public EnemyData enemy;
 
-        public BattleNodeModel(string name, Sprite icon, EnemySO enemySO) : base(name, icon)
+        public BattleNodeModel(MapNodeData data) : base(data)
         {
-            enemy = new EnemyData(enemySO.info);
+            battleNodeSO = (BattleNodeSO)data.nodeSO;
+            enemy = new EnemyData(data.enemy.info);
         }
     }
 
     public sealed class BattleNode : NodeBase
     {
-        public void Init(string name, Sprite icon, EnemySO enemySO)
+        public void Init(MapNodeData data)
         {
-            Init(new BattleNodeModel(name, icon, enemySO));
+            Init(new BattleNodeModel(data));
         }
     }
 }

@@ -15,6 +15,7 @@ namespace ScriptableObjects.Actors
 
     public abstract class ActorSO : ScriptableObject
     {
+        public Sprite idle;
     }
 
 
