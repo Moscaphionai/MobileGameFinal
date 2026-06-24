@@ -38,7 +38,10 @@ namespace Compose.UI
             {
                 player = lainaSO
             });
-            ComposeManager.Instance.LoadSceneWithTransition("RunScene");
+            CommandQueueManager.Instance.Send(new LoadSceneCommand
+            {
+                sceneName = "RunScene"
+            });
         }
 
         private void OnBack()

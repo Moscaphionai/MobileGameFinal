@@ -7,4 +7,9 @@ namespace Messages.Commands.Map
     {
         public MapNodeData node;
     }
+
+    public sealed class EnterMapNodeCommand : ICommand
+    {
+        public MapNodeData node;
+    }
 }

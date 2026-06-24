@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MobileGameFinal AI 接手上下文</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --panel: #151b23;
+            --panel-2: #1c2430;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #9da7b3;
+            --accent: #7ee787;
+            --warn: #f2cc60;
+            --bad: #ff7b72;
+            --info: #79c0ff;
+            --code: #090c10;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(126, 231, 135, 0.12), transparent 28rem),
+                radial-gradient(circle at top right, rgba(121, 192, 255, 0.10), transparent 32rem),
+                var(--bg);
+            font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", Arial, sans-serif;
+            line-height: 1.72;
+        }
+
+        header {
+            padding: 40px clamp(20px, 5vw, 72px) 24px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(13, 17, 23, 0.72);
+        }
+
+        main {
+            max-width: 1160px;
+            margin: 0 auto;
+            padding: 28px clamp(18px, 4vw, 48px) 64px;
+        }
+
+        h1, h2, h3 { line-height: 1.28; }
+        h1 { margin: 0 0 10px; font-size: 34px; color: var(--accent); }
+        h2 { margin: 34px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+        h3 { margin: 24px 0 10px; color: var(--info); }
+        p { margin: 8px 0 12px; }
+        ul { margin: 8px 0 14px; padding-left: 24px; }
+        li { margin: 5px 0; }
+
+        code, pre {
+            font-family: Consolas, "JetBrains Mono", "Courier New", monospace;
+            background: var(--code);
+        }
+
+        code {
+            padding: 2px 6px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: #d2a8ff;
+        }
+
+        pre {
+            overflow-x: auto;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: #c9d1d9;
+        }
+
+        .card {
+            margin: 16px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(28, 36, 48, 0.92), rgba(21, 27, 35, 0.92));
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 14px;
+        }
+
+        .tag {
+            display: inline-block;
+            margin: 2px 4px 2px 0;
+            padding: 2px 8px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.03);
+            font-size: 13px;
+        }
+
+        .ok { color: var(--accent); }
+        .warn { color: var(--warn); }
+        .bad { color: var(--bad); }
+        .muted { color: var(--muted); }
+        .note {
+            border-left: 4px solid var(--warn);
+            padding: 10px 14px;
+            background: rgba(242, 204, 96, 0.08);
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 18px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        th {
+            text-align: left;
+            color: var(--accent);
+            background: rgba(126, 231, 135, 0.07);
+        }
+
+        tr:last-child td { border-bottom: 0; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>MobileGameFinal AI 接手上下文</h1>
+    <p class="muted">更新时间：2026-06-23。用途：让后续 AI 快速理解当前项目风格、已经完成的实现、下一步该做什么，以及哪些事情不要擅自做。</p>
+    <div>
+        <span class="tag">Unity</span>
+        <span class="tag">C#</span>
+        <span class="tag">CommandQueue</span>
+        <span class="tag">EventQueue</span>
+        <span class="tag">ScriptableObject</span>
+        <span class="tag">Slay the Spire-like Battle</span>
+    </div>
+</header>
+
+<main>
+    <section class="card">
+        <h2>0. 先读这个：用户偏好</h2>
+        <ul>
+            <li>用户要的是<strong>开发初期的最小可用实现</strong>，不要臆想完整商业游戏需求。</li>
+            <li>不要主动加胜负判断、奖励结算、遗物、Buff、消耗牌、目标选择 UI、存档、可复现随机等，除非用户明确要求。</li>
+            <li>用户非常在意职责边界：对象/系统要“自己管理自己”，不要让低层对象反向去找上层数据。</li>
+            <li>不要随便改 <code>EventQueueManager.Publish()</code>。它当前内部用 <code>PublishAsync(evt).Forget()</code> 是用户认可的。</li>
+            <li>系统间通信走 <code>CommandQueueManager</code>；系统内流程/刷新/效果结算走 <code>EventQueueManager</code>。</li>
+            <li>实现后通常只做编译检查；不要运行场景、不要手动 Play 测试，用户自己手测。</li>
+            <li>改文件前先检查现状。尽量小改，不要大拆文件；如果用户明确说“不要拆成多个文件”，必须遵守。</li>
+            <li>旧的 <code>ForAIDialog.md</code> 里关于 Map 节点使用 Toggle/Confirm 的描述已经过期：现在节点基于 Button，点击 <code>MapNodeView</code> 直接发 Command。</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>1. 项目整体风格</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>数据风格</h3>
+                <ul>
+                    <li><code>ScriptableObject</code> 存导表后的原始配置数据。</li>
+                    <li>运行时数据放在 <code>Compose</code> 下，例如 <code>PlayerData</code>、<code>EnemyData</code>、<code>CardData</code>、<code>BattleData</code>。</li>
+                    <li>Actor 相关 Data 使用 public 字段、小驼峰；不要自动属性。</li>
+                    <li>Data 尽量直接、可序列化，不做复杂封装。</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>通信风格</h3>
+                <ul>
+                    <li>跨系统：<code>CommandQueueManager.Instance.Send(command)</code>。</li>
+                    <li>系统内：<code>EventQueueManager.Instance.Publish(evt)</code>。</li>
+                    <li>EventQueue 支持 priority，小数字先执行。</li>
+                    <li>UI 刷新一般监听 DataChanged Event。</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>UI 风格</h3>
+                <ul>
+                    <li><code>UIManager</code> 是场景级，不跨场景。</li>
+                    <li><code>ComposeManager</code> 是 DDOL，控制场景切换和过场。</li>
+                    <li><code>BasePanel</code> 支持渐入渐出。</li>
+                    <li><code>TransitionPanel</code> 是全屏黑幕，淡出旧场景、淡入新场景。</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>代码风格</h3>
+                <ul>
+                    <li>保持文件和类的职责清晰，不要把一个系统写成万能管理器。</li>
+                    <li>优先使用现有命名和目录，不要引入新框架。</li>
+                    <li>不要为 v1 写复杂防御、回滚、持久化、兼容层。</li>
+                    <li>Unity 文件编辑后可做 <code>dotnet build Assembly-CSharp.csproj --no-restore -v:minimal</code>。</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>2. 当前核心架构</h2>
+
+        <h3>2.1 Manager 关系</h3>
+        <table>
+            <thead>
+            <tr>
+                <th>系统</th>
+                <th>当前职责</th>
+                <th>注意事项</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td><code>ComposeManager</code></td>
+                <td>DDOL，全局场景加载入口。监听 <code>LoadSceneCommand</code>，控制黑幕过场。</td>
+                <td>加载顺序：旧场景淡出 → LoadScene → 新场景淡入 → 执行 <code>onLoaded</code>。</td>
+            </tr>
+            <tr>
+                <td><code>UIManager</code></td>
+                <td>场景级 UI 管理器，注册当前场景 Panel，持有当前场景 <code>TransitionPanel</code>。</td>
+                <td>不跨场景；<code>MonoSingleton.OnDestroy</code> 会清空旧 Instance。</td>
+            </tr>
+            <tr>
+                <td><code>RunManager</code></td>
+                <td>一次 Run 的上层流程和数据中心。持有 <code>playerData</code>，监听进入地图节点。</td>
+                <td>当节点是 Battle/Boss 时创建 <code>EnemyData</code>，加载 <code>BattleRoom</code>，淡入后发 <code>StartBattleCommand</code>。</td>
+            </tr>
+            <tr>
+                <td><code>MapManager</code></td>
+                <td>管理地图数据，生成满三叉树，推进当前节点。</td>
+                <td>不创建战斗数据，不加载场景，不接触 <code>BattleManager</code>。</td>
+            </tr>
+            <tr>
+                <td><code>BattleManager</code></td>
+                <td>战斗 FSM、回合循环、出牌校验、Effect 事件结算链。</td>
+                <td>只吃 <code>StartBattleCommand</code>，不要向 <code>RunManager/MapManager</code> 取数据。</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <h3>2.2 场景</h3>
+        <ul>
+            <li><code>Main</code>：选角入口。</li>
+            <li><code>RunScene</code>：当前 RunRoom/MapRoom；负责地图，也会承载后续 Incident/Break/Reward。</li>
+            <li><code>BattleRoom</code>：战斗场景，已加入 Build Settings，并补了场景级 <code>UIManager + TransitionPanel</code>。</li>
+            <li>Build Settings 当前包含 <code>SampleScene</code>、<code>RunScene</code>、<code>BattleRoom</code>。</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>3. 已经完成的关键实现</h2>
+
+        <div class="card">
+            <h3>3.1 Card / Effect</h3>
+            <ul>
+                <li><code>CardSO</code> 存导表原始卡牌数据，<code>CardData</code> 是运行时卡牌数据。</li>
+                <li>每张卡可以有多个 <code>EffectData</code>。</li>
+                <li><code>EffectData</code> 当前字段包括：<code>type</code>、<code>magnification</code>、<code>domain</code>、<code>target</code>。</li>
+                <li><code>EffectInfo.target</code> 会拷贝到 <code>EffectData.target</code>。</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>3.2 Battle Effect 结算</h3>
+            <p>出牌由 <code>PlayCardCommand</code> 驱动，真正 Effect 结算交给 <code>EventQueueManager</code> 的 priority 链。</p>
+            <table>
+                <thead>
+                <tr>
+                    <th>Priority</th>
+                    <th>Resolver</th>
+                    <th>作用</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>0</td>
+                    <td>EffectValueResolver</td>
+                    <td>按 <code>domain</code> 和 <code>magnification</code> 计算 <code>value</code>。</td>
+                </tr>
+                <tr>
+                    <td>10</td>
+                    <td>EffectTargetResolver</td>
+                    <td>根据 <code>EffectTarget</code> 设置目标。</td>
+                </tr>
+                <tr>
+                    <td>20</td>
+                    <td>EffectApplyResolver</td>
+                    <td>按 <code>EffectType</code> 修改 hp/shield。</td>
+                </tr>
+                <tr>
+                    <td>90</td>
+                    <td>BattleDataNotifyResolver</td>
+                    <td>发布 <code>BattleDataChangedEvent</code>。</td>
+                </tr>
+                </tbody>
+            </table>
+            <pre>value = sourceDomainValue * effect.magnification / 100
+
+Damage: 先扣 shield，剩余扣 curHp
+Shield: target.shield += value
+Heal:   target.curHp += value，不超过 target.hp</pre>
+        </div>
+
+        <div class="card">
+            <h3>3.3 BattleManager</h3>
+            <ul>
+                <li>基于 FSM 管理 <code>None / Player / Enemy</code> 回合状态。</li>
+                <li>监听 <code>StartBattleCommand</code>、<code>EndPlayerTurnCommand</code>、<code>EndEnemyTurnCommand</code>、<code>PlayCardCommand</code>。</li>
+                <li>当前只实现战斗和回合循环，不实现胜负判断。</li>
+                <li><code>BattleData</code> 当前包含：player、enemy、round、energy、maxEnergy、hand、discardPile。</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>3.4 Map</h3>
+            <ul>
+                <li>地图是一块区域，不做多区域。</li>
+                <li>使用满三叉树结构，每层 3 个子节点。</li>
+                <li>Boss 前一层固定 Break。</li>
+                <li>半程深度固定 Reward，整层都是 Reward。</li>
+                <li>普通节点从 <code>nodePool</code> 随机。</li>
+                <li><code>BattleNodeSO/BossNodeSO</code> 中配置可能敌人，生成节点时给 <code>MapNodeData.enemy</code>。</li>
+                <li><code>MapNodeView</code> 基于 Button，点击直接发送 <code>ConfirmNodeCommand</code>。</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>3.5 RunScene 到 BattleRoom</h3>
+            <ol>
+                <li><code>MapNodeView</code> 点击后发送 <code>ConfirmNodeCommand</code>。</li>
+                <li><code>MapManager</code> 更新 <code>curNode</code>。</li>
+                <li><code>MapManager</code> 发布 <code>MapDataChangedEvent</code> 给 Map 表现刷新。</li>
+                <li><code>MapManager</code> 发送 <code>EnterMapNodeCommand</code> 给 Run 系统。</li>
+                <li><code>RunManager</code> 判断 Battle/Boss，创建 <code>EnemyData</code>。</li>
+                <li><code>RunManager</code> 发送 <code>LoadSceneCommand</code>。</li>
+                <li><code>ComposeManager</code> 加载 <code>BattleRoom</code>，新场景淡入完成后执行 <code>onLoaded</code>。</li>
+                <li><code>onLoaded</code> 发送 <code>StartBattleCommand { player, enemy }</code>。</li>
+                <li><code>BattleManager</code> 开始战斗。</li>
+            </ol>
+        </div>
+    </section>
+
+    <section>
+        <h2>4. 当前消息清单</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>Commands</h3>
+                <ul>
+                    <li><code>RunStartCommand</code>：选角后开始 Run，携带 <code>PlayerSO</code>。</li>
+                    <li><code>LoadSceneCommand</code>：请求场景切换，携带 <code>sceneName</code> 和可选 <code>onLoaded</code>。</li>
+                    <li><code>ConfirmNodeCommand</code>：MapNodeView 点击节点。</li>
+                    <li><code>EnterMapNodeCommand</code>：Map 系统通知 Run 系统进入某节点。</li>
+                    <li><code>StartBattleCommand</code>：启动战斗，携带 <code>PlayerData</code> 和 <code>EnemyData</code>。</li>
+                    <li><code>PlayCardCommand</code>：出牌，携带 <code>handIndex</code>。</li>
+                    <li><code>EndPlayerTurnCommand</code> / <code>EndEnemyTurnCommand</code>：回合推进。</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>Events</h3>
+                <ul>
+                    <li><code>MapDataChangedEvent</code>：Map 内部数据变化，MapPanel 刷新。</li>
+                    <li><code>BattleStartedEvent</code>：战斗开始。</li>
+                    <li><code>BattleTurnChangedEvent</code>：回合变化。</li>
+                    <li><code>BattleDataChangedEvent</code>：战斗数据刷新。</li>
+                    <li><code>ResolveEffectEvent</code>：Effect priority 链式结算。</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>5. 不要误读/不要回退的点</h2>
+        <ul>
+            <li><span class="bad">不要</span>把 <code>BattleManager</code> 写成主动读取 <code>RunManager.Instance</code> 或 <code>MapManager.Instance</code> 的东西。战斗数据必须通过 <code>StartBattleCommand</code> 传入。</li>
+            <li><span class="bad">不要</span>把 <code>UIManager</code> 做成 DDOL。它是场景级；DDOL 的是 <code>ComposeManager</code>。</li>
+            <li><span class="bad">不要</span>恢复 Toggle + ConfirmButton 的 Map 交互。现在是 Button 点击节点直接发 Command。</li>
+            <li><span class="bad">不要</span>擅自改 <code>EventQueueManager.Publish()</code> 或移除 <code>Forget()</code>。</li>
+            <li><span class="bad">不要</span>在没有用户要求时加入胜负判断、奖励面板、回地图、完整抽牌系统。</li>
+            <li><span class="bad">不要</span>用 async-await 重写战斗/回合流程。之前要求是 FSM + Command/Event；场景过场用 Coroutine。</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>6. 下一步建议</h2>
+        <div class="note">
+            下一步应由用户明确指定。下面只是项目自然演进方向，不代表可以擅自开做。
+        </div>
+
+        <h3>优先级较高</h3>
+        <ol>
+            <li>实现 BattleRoom 的表现层：监听 <code>BattleDataChangedEvent</code>，刷新玩家/敌人血量、护盾、能量、手牌。</li>
+            <li>实现手牌 UI 点击：CardView 或 BattlePanel 点击某张手牌时发送 <code>PlayCardCommand { handIndex }</code>。</li>
+            <li>补 BattleRoom 的基础 Player/Enemy View 初始化，让 <code>StartBattleCommand</code> 后能看到双方数据。</li>
+            <li>实现 End Turn 按钮：发送 <code>EndPlayerTurnCommand</code>。</li>
+        </ol>
+
+        <h3>稍后再做</h3>
+        <ol>
+            <li>战斗结束后回到 RunScene/RunRoom。</li>
+            <li>Reward / Break / Incident 的具体结算和 UI。</li>
+            <li>抽牌、弃牌、洗牌、消耗牌等卡牌循环。</li>
+            <li>目标选择、多敌人、Buff、遗物。</li>
+            <li>更完整的 Excel 导表自动生成 SO 流程。</li>
+        </ol>
+    </section>
+
+    <section>
+        <h2>7. 接手 AI 的工作流程</h2>
+        <ol>
+            <li>先用 <code>rg</code> 搜索相关符号，确认当前实现，不要靠记忆猜。</li>
+            <li>只改用户要求范围内的文件；用户讨厌过度设计。</li>
+            <li>本项目编辑文件时优先使用 patch，避免脚本批量重写用户内容。</li>
+            <li>如果用户要求检查，运行：</li>
+        </ol>
+        <pre>dotnet build Assembly-CSharp.csproj --no-restore -v:minimal</pre>
+        <p>不要运行 Unity PlayMode，不要做手动视觉测试，除非用户明确要求。</p>
+    </section>
+</main>
+</body>
+</html>

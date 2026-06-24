@@ -15,4 +15,9 @@ namespace Messages.Commands.Battle
     public sealed class EndEnemyTurnCommand : ICommand
     {
     }
+
+    public sealed class PlayCardCommand : ICommand
+    {
+        public int handIndex;
+    }
 }

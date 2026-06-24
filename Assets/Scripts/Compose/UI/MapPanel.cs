@@ -1,4 +1,6 @@
 using Compose.Map;
+using Messages;
+using Messages.Events.Map;
 using UnityEngine;
 using Utilities;
 
@@ -11,6 +13,17 @@ namespace Compose.UI
         [SerializeField] private GameObject nodeView;
         
         private void OnEnable()
+        {
+            EventQueueManager.Instance.AddListener<MapDataChangedEvent>(Refresh);
+            Refresh();
+        }
+
+        private void OnDisable()
+        {
+            EventQueueManager.Instance.RemoveListener<MapDataChangedEvent>(Refresh);
+        }
+
+        private void Refresh(MapDataChangedEvent evt)
         {
             Refresh();
         }

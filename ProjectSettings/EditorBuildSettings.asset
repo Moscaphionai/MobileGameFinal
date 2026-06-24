@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/RunScene.unity
     guid: c20ee7a202669654788a19c844b1f645
+  - enabled: 1
+    path: Assets/Scenes/BattleRoom.unity
+    guid: 1e569f8cb04a14a428f6450af2697307
   m_configObjects: {}

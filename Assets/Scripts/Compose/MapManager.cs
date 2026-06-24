@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Messages;
 using Messages.Commands.Map;
+using Messages.Events.Map;
 using ScriptableObjects.Actors;
 using ScriptableObjects.Map;
 using UnityEngine;
@@ -54,6 +55,15 @@ namespace Compose
         private void ConfirmNode(ConfirmNodeCommand command)
         {
             curNode = command.node;
+            EventQueueManager.Instance.Publish(new MapDataChangedEvent
+            {
+                curNode = curNode
+            });
+
+            CommandQueueManager.Instance.Send(new EnterMapNodeCommand
+            {
+                node = curNode
+            });
         }
 
         private MapNodeData CreateNodeTree(int depth, int index, int rewardDepth)

@@ -7,12 +7,14 @@ namespace Compose.Effects
         public EffectType type;
         public int magnification;
         public EffectDomain domain;
+        public EffectTarget target;
 
         public EffectData(EffectInfo info)
         {
             type = info.type;
             magnification = info.magnification;
             domain = info.domain;
+            target = info.target;
         }
     }
 }

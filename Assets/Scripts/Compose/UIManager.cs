@@ -57,9 +57,9 @@ namespace Compose
             transitionPanel.FadeOut(onComplete);
         }
 
-        public void FadeInTransition()
+        public void FadeInTransition(Action onComplete = null)
         {
-            transitionPanel.FadeIn();
+            transitionPanel.FadeIn(onComplete);
         }
     }
 }

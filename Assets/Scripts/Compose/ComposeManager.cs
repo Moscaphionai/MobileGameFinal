@@ -1,4 +1,7 @@
+using System;
 using Compose.UI;
+using Messages;
+using Messages.Commands.Compose;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Utilities;
@@ -15,14 +18,35 @@ namespace Compose
 
     public class ComposeManager : MonoSingleton<ComposeManager>
     {
+        private Action onSceneLoaded;
+
         protected override void Awake()
         {
             base.Awake();
-            DontDestroyOnLoad(gameObject);
+
+            if (Instance == this)
+                DontDestroyOnLoad(gameObject);
         }
 
-        public void LoadSceneWithTransition(string sceneName)
+        private void OnEnable()
         {
+            CommandQueueManager.Instance.AddListener<LoadSceneCommand>(LoadScene);
+        }
+
+        private void OnDisable()
+        {
+            CommandQueueManager.Instance.RemoveListener<LoadSceneCommand>(LoadScene);
+        }
+
+        private void LoadScene(LoadSceneCommand command)
+        {
+            LoadSceneWithTransition(command.sceneName, command.onLoaded);
+        }
+
+        public void LoadSceneWithTransition(string sceneName, Action onLoaded = null)
+        {
+            onSceneLoaded = onLoaded;
+
             UIManager.Instance.FadeOutTransition(() =>
             {
                 SceneManager.sceneLoaded += OnSceneLoaded;
@@ -33,7 +57,11 @@ namespace Compose
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
-            UIManager.Instance.FadeInTransition();
+            UIManager.Instance.FadeInTransition(() =>
+            {
+                onSceneLoaded?.Invoke();
+                onSceneLoaded = null;
+            });
         }
     }
 }

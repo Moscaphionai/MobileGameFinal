@@ -23,11 +23,11 @@ namespace Compose.UI
             StartFade(1f, true, onComplete);
         }
 
-        public void FadeIn()
+        public void FadeIn(Action onComplete = null)
         {
             gameObject.SetActive(true);
             canvasGroup.alpha = 1f;
-            StartFade(0f, false, null);
+            StartFade(0f, false, onComplete);
         }
 
         private void StartFade(float target, bool blocksAfterFade, Action onComplete)
