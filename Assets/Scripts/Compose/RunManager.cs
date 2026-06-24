@@ -18,12 +18,14 @@ namespace Compose
         {
             CommandQueueManager.Instance.AddListener<RunStartCommand>(RunStart);
             CommandQueueManager.Instance.AddListener<EnterMapNodeCommand>(EnterMapNode);
+            CommandQueueManager.Instance.AddListener<BattleFinishedCommand>(BattleFinished);
         }
 
         private void OnDisable()
         {
             CommandQueueManager.Instance.RemoveListener<RunStartCommand>(RunStart);
             CommandQueueManager.Instance.RemoveListener<EnterMapNodeCommand>(EnterMapNode);
+            CommandQueueManager.Instance.RemoveListener<BattleFinishedCommand>(BattleFinished);
         }
 
         private void RunStart(RunStartCommand command)
@@ -38,7 +40,7 @@ namespace Compose
             if (command.node.type != NodeType.Battle && command.node.type != NodeType.Boss)
                 return;
 
-            var enemyData = new EnemyData(command.node.enemy.info);
+            var enemyData = new EnemyData(command.node.enemy);
 
             CommandQueueManager.Instance.Send(new LoadSceneCommand
             {
@@ -51,6 +53,14 @@ namespace Compose
                         enemy = enemyData
                     });
                 }
+            });
+        }
+
+        private void BattleFinished(BattleFinishedCommand command)
+        {
+            CommandQueueManager.Instance.Send(new LoadSceneCommand
+            {
+                sceneName = command.isWin ? "RunScene" : "Main"
             });
         }
     }

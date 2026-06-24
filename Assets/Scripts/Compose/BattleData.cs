@@ -13,6 +13,7 @@ namespace Compose
         public int round;
         public int energy;
         public int maxEnergy = 3;
+        public List<CardData> drawPile = new();
         public List<CardData> hand = new();
         public List<CardData> discardPile = new();
 

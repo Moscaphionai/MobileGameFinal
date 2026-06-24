@@ -590,6 +590,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1550108831067617404}
   - component: {fileID: 6743060020956328923}
+  - component: {fileID: 880000001}
+  - component: {fileID: 880000002}
   m_Layer: 0
   m_Name: ActorPanel
   m_TagString: Untagged
@@ -665,3 +667,33 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &880000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7105604998121112944}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5808b071da2496c81bb3ae4cdc5eb49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  idle: {fileID: 6743060020956328923}
+  hp: {fileID: 7575938772202303424}
+  hpBar: {fileID: 8928707913690605717}
+--- !u!114 &880000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7105604998121112944}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae38ca3a920641f9b9ae9ea8d4a11eb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  idle: {fileID: 6743060020956328923}
+  hp: {fileID: 7575938772202303424}
+  hpBar: {fileID: 8928707913690605717}

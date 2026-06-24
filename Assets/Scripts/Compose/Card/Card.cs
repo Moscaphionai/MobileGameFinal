@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using Compose.Effects;
+using Messages;
+using Messages.Commands.Battle;
 using ScriptableObjects;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Compose.Card
 {
@@ -39,18 +42,46 @@ namespace Compose.Card
     public sealed class Card : MonoDul
     {
         [SerializeField] private CardView view;
+        [SerializeField] private Button button;
 
         public CardData data;
+        private int handIndex;
+
+        private void OnEnable()
+        {
+            button.onClick.AddListener(Play);
+        }
+
+        private void OnDisable()
+        {
+            button.onClick.RemoveListener(Play);
+        }
 
         public void Init(CardSO cardSO)
         {
             data = new CardData(cardSO);
+            handIndex = -1;
+            Refresh();
+        }
+
+        public void Init(CardData data, int handIndex)
+        {
+            this.data = data;
+            this.handIndex = handIndex;
             Refresh();
         }
 
         public void Refresh()
         {
             view.Render(data);
+        }
+
+        private void Play()
+        {
+            CommandQueueManager.Instance.Send(new PlayCardCommand
+            {
+                handIndex = handIndex
+            });
         }
     }
 }

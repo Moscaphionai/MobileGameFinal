@@ -16,6 +16,11 @@ namespace Messages.Commands.Battle
     {
     }
 
+    public sealed class BattleFinishedCommand : ICommand
+    {
+        public bool isWin;
+    }
+
     public sealed class PlayCardCommand : ICommand
     {
         public int handIndex;

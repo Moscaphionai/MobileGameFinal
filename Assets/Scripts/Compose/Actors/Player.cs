@@ -9,7 +9,7 @@ namespace Compose.Actors
     public sealed class PlayerData : ActorData
     {
         public List<CardData> deck = new();
-        public PlayerData(PlayerSO playerSO) : base(playerSO.info)
+        public PlayerData(PlayerSO playerSO) : base(playerSO.info, playerSO.idle)
         {
             foreach (var cardSO in playerSO.deck)
             {

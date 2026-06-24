@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ScriptableObjects.Actors
@@ -12,5 +13,6 @@ namespace ScriptableObjects.Actors
     public sealed class EnemySO : ActorSO
     {
         public EnemyInfo info = new EnemyInfo();
+        public List<EffectInfo> effects = new();
     }
 }

@@ -6,11 +6,13 @@ namespace Compose.Actors
 {
     public class ActorView : MonoDul
     {
-        [SerializeField] private TMP_Text hp;
-        [SerializeField] private Slider hpBar;
+        [SerializeField] protected SpriteRenderer idle;
+        [SerializeField] protected TMP_Text hp;
+        [SerializeField] protected Slider hpBar;
 
-        public void Render(ActorData data)
+        public virtual void Render(ActorData data)
         {
+            idle.sprite = data.idle;
             hp.text = $"{data.curHp} / {data.hp}";
             hpBar.maxValue = data.hp;
             hpBar.value = data.curHp;

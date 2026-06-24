@@ -20,7 +20,8 @@ namespace ScriptableObjects
     {
         Player,
         SingleEnemy,
-        AllEnemy
+        AllEnemy,
+        Self
     }
     
     [Serializable]

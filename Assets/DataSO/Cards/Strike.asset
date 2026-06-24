@@ -23,6 +23,6 @@ MonoBehaviour:
     type: 0
   effects:
   - type: 0
-    figure: 100
     domain: 0
+    magnification: 100
     target: 1

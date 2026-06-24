@@ -12,7 +12,11 @@ namespace Compose
 {
     public sealed class BattleManager : MonoSingleton<BattleManager>
     {
+        private const int DrawTargetCount = 5;
+        private const int HandLimit = 10;
+
         private BattleStateMachine fsm;
+        private bool isBattleFinished;
 
         public PlayerData player;
         public EnemyData enemy;
@@ -35,12 +39,12 @@ namespace Compose
         {
             CommandQueueManager.Instance.AddListener<StartBattleCommand>(HandleCommand);
             CommandQueueManager.Instance.AddListener<EndPlayerTurnCommand>(HandleCommand);
-            CommandQueueManager.Instance.AddListener<EndEnemyTurnCommand>(HandleCommand);
             CommandQueueManager.Instance.AddListener<PlayCardCommand>(HandleCommand);
 
             EventQueueManager.Instance.AddListener<ResolveEffectEvent>(ResolveEffectValue, 0);
             EventQueueManager.Instance.AddListener<ResolveEffectEvent>(ResolveEffectTarget, 10);
             EventQueueManager.Instance.AddListener<ResolveEffectEvent>(ResolveEffectApply, 20);
+            EventQueueManager.Instance.AddListener<ResolveEffectEvent>(CheckBattleResult, 80);
             EventQueueManager.Instance.AddListener<ResolveEffectEvent>(NotifyBattleDataChanged, 90);
         }
 
@@ -48,12 +52,12 @@ namespace Compose
         {
             CommandQueueManager.Instance.RemoveListener<StartBattleCommand>(HandleCommand);
             CommandQueueManager.Instance.RemoveListener<EndPlayerTurnCommand>(HandleCommand);
-            CommandQueueManager.Instance.RemoveListener<EndEnemyTurnCommand>(HandleCommand);
             CommandQueueManager.Instance.RemoveListener<PlayCardCommand>(HandleCommand);
 
             EventQueueManager.Instance.RemoveListener<ResolveEffectEvent>(ResolveEffectValue);
             EventQueueManager.Instance.RemoveListener<ResolveEffectEvent>(ResolveEffectTarget);
             EventQueueManager.Instance.RemoveListener<ResolveEffectEvent>(ResolveEffectApply);
+            EventQueueManager.Instance.RemoveListener<ResolveEffectEvent>(CheckBattleResult);
             EventQueueManager.Instance.RemoveListener<ResolveEffectEvent>(NotifyBattleDataChanged);
         }
 
@@ -67,11 +71,6 @@ namespace Compose
             fsm.Handle(command);
         }
 
-        private void HandleCommand(EndEnemyTurnCommand command)
-        {
-            fsm.Handle(command);
-        }
-
         private void HandleCommand(PlayCardCommand command)
         {
             fsm.Handle(command);
@@ -79,6 +78,7 @@ namespace Compose
 
         private void StartBattle(StartBattleCommand command)
         {
+            isBattleFinished = false;
             player = command.player;
             enemy = command.enemy;
             Round = 1;
@@ -86,7 +86,8 @@ namespace Compose
             {
                 round = Round
             };
-            data.hand.AddRange(player.deck);
+            data.drawPile.AddRange(player.deck);
+            Shuffle(data.drawPile);
 
             EventQueueManager.Instance.Publish(new BattleStartedEvent
             {
@@ -99,15 +100,107 @@ namespace Compose
 
         private void StartNextRound()
         {
+            if (isBattleFinished)
+                return;
+
             Round++;
             data.round = Round;
-            data.energy = data.maxEnergy;
 
             fsm.ChangeState(BattleTurn.Player);
         }
 
+        private void StartPlayerTurn()
+        {
+            if (isBattleFinished)
+                return;
+
+            data.energy = data.maxEnergy;
+            player.shield = 0;
+            DrawToTargetCount();
+
+            EventQueueManager.Instance.Publish(new BattleDataChangedEvent
+            {
+                data = data
+            });
+        }
+
+        private void EndPlayerTurn()
+        {
+            if (isBattleFinished)
+                return;
+
+            data.discardPile.AddRange(data.hand);
+            data.hand.Clear();
+            EventQueueManager.Instance.Publish(new BattleDataChangedEvent
+            {
+                data = data
+            });
+
+            fsm.ChangeState(BattleTurn.Enemy);
+        }
+
+        private void StartEnemyTurn()
+        {
+            if (isBattleFinished)
+                return;
+
+            enemy.shield = 0;
+            ResolveEnemyEffects();
+            if (!isBattleFinished)
+                StartNextRound();
+        }
+
+        private void ResolveEnemyEffects()
+        {
+            foreach (var effect in enemy.effects)
+            {
+                if (isBattleFinished)
+                    return;
+
+                EventQueueManager.Instance.Publish(new ResolveEffectEvent
+                {
+                    effect = effect,
+                    source = enemy,
+                    player = player,
+                    enemy = enemy
+                });
+            }
+        }
+
+        private void DrawToTargetCount()
+        {
+            while (data.hand.Count < DrawTargetCount && data.hand.Count < HandLimit)
+            {
+                if (data.drawPile.Count == 0)
+                {
+                    data.drawPile.AddRange(data.discardPile);
+                    data.discardPile.Clear();
+                    Shuffle(data.drawPile);
+                }
+
+                if (data.drawPile.Count == 0)
+                    return;
+
+                var card = data.drawPile[0];
+                data.drawPile.RemoveAt(0);
+                data.hand.Add(card);
+            }
+        }
+
+        private void Shuffle(List<CardData> cards)
+        {
+            for (var i = 0; i < cards.Count; i++)
+            {
+                var randomIndex = UnityEngine.Random.Range(i, cards.Count);
+                (cards[i], cards[randomIndex]) = (cards[randomIndex], cards[i]);
+            }
+        }
+
         private void PlayCard(PlayCardCommand command)
         {
+            if (isBattleFinished)
+                return;
+
             if (Turn != BattleTurn.Player)
                 return;
 
@@ -123,6 +216,9 @@ namespace Compose
 
             foreach (var effect in card.effects)
             {
+                if (isBattleFinished)
+                    break;
+
                 EventQueueManager.Instance.Publish(new ResolveEffectEvent
                 {
                     effect = effect,
@@ -133,10 +229,13 @@ namespace Compose
             }
 
             data.discardPile.Add(card);
-            EventQueueManager.Instance.Publish(new BattleDataChangedEvent
+            if (!isBattleFinished)
             {
-                data = data
-            });
+                EventQueueManager.Instance.Publish(new BattleDataChangedEvent
+                {
+                    data = data
+                });
+            }
         }
 
         private void ResolveEffectValue(ResolveEffectEvent evt)
@@ -159,40 +258,40 @@ namespace Compose
                 EffectTarget.Player => evt.player,
                 EffectTarget.SingleEnemy => evt.enemy,
                 EffectTarget.AllEnemy => evt.enemy,
+                EffectTarget.Self => evt.source,
                 _ => evt.enemy
             };
         }
 
         private void ResolveEffectApply(ResolveEffectEvent evt)
         {
-            switch (evt.effect.type)
+            evt.target.ApplyEffect(evt.effect, evt.value);
+        }
+
+        private void CheckBattleResult(ResolveEffectEvent evt)
+        {
+            if (isBattleFinished)
+                return;
+
+            if (enemy.curHp <= 0)
             {
-                case EffectType.Damage:
-                    ApplyDamage(evt.target, evt.value);
-                    break;
-                case EffectType.Shield:
-                    evt.target.shield += evt.value;
-                    break;
-                case EffectType.Heal:
-                    evt.target.curHp += evt.value;
-                    if (evt.target.curHp > evt.target.hp)
-                        evt.target.curHp = evt.target.hp;
-                    break;
+                FinishBattle(true);
+                return;
+            }
+
+            if (player.curHp <= 0)
+            {
+                FinishBattle(false);
             }
         }
 
-        private void ApplyDamage(ActorData target, int value)
+        private void FinishBattle(bool isWin)
         {
-            var shieldDamage = value;
-            if (shieldDamage > target.shield)
-                shieldDamage = target.shield;
-
-            target.shield -= shieldDamage;
-            value -= shieldDamage;
-            target.curHp -= value;
-
-            if (target.curHp < 0)
-                target.curHp = 0;
+            isBattleFinished = true;
+            CommandQueueManager.Instance.Send(new BattleFinishedCommand
+            {
+                isWin = isWin
+            });
         }
 
         private void NotifyBattleDataChanged(ResolveEffectEvent evt)
@@ -248,13 +347,18 @@ namespace Compose
             {
             }
 
+            public override void Enter()
+            {
+                battle.StartPlayerTurn();
+            }
+
             public override void Handle(ICommand command)
             {
                 if (command is PlayCardCommand playCard)
                     battle.PlayCard(playCard);
 
                 if (command is EndPlayerTurnCommand)
-                    battle.fsm.ChangeState(BattleTurn.Enemy);
+                    battle.EndPlayerTurn();
             }
         }
 
@@ -266,10 +370,13 @@ namespace Compose
             {
             }
 
+            public override void Enter()
+            {
+                battle.StartEnemyTurn();
+            }
+
             public override void Handle(ICommand command)
             {
-                if (command is EndEnemyTurnCommand)
-                    battle.StartNextRound();
             }
         }
 

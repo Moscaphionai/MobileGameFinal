@@ -18,3 +18,12 @@ MonoBehaviour:
     atk: 60
     def: 50
     hp: 320
+  effects:
+  - type: 0
+    domain: 0
+    magnification: 100
+    target: 0
+  - type: 1
+    domain: 1
+    magnification: 100
+    target: 3

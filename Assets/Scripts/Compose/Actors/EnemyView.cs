@@ -2,6 +2,9 @@
 {
     public class EnemyView : ActorView
     {
-        
+        public void Render(EnemyData data)
+        {
+            base.Render(data);
+        }
     }
 }
